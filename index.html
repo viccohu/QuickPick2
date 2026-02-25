@@ -1959,6 +1959,11 @@
     let currentView = 'grid';
     let currentTheme = 'default';
     let tooltipTimeout = null;
+    let cachedWrapperRect = null;
+    let cachedImgRect = null;
+    let rafId = null;
+    let lazyImageObserver = null;
+    let fileMetadataCache = new Map();
 
     document.addEventListener('DOMContentLoaded', () => {
       initEventListeners();
@@ -1968,8 +1973,9 @@
       initBatchMode();
       initThumbnailResize();
       initViewToggle();
-      // initThemeSelector();
+      initThemeSelector();
       initFileTooltip();
+      initLazyImageObserver();
     });
 
     // 初始化事件监听器
@@ -2365,11 +2371,147 @@
       }
     }
 
-    // 更新缩略图 - 使用虚拟滚动和懒加载优化
+    let virtualScrollData = {
+      itemWidth: 130,
+      itemHeight: 110,
+      visibleStart: 0,
+      visibleEnd: 0,
+      containerWidth: 0,
+      scrollLeft: 0
+    };
+
     function updateThumbnails(groups) {
       const wrapper = document.getElementById('thumbnailWrapper');
+      const container = document.getElementById('thumbnailContainer');
+      
+      if (currentView !== 'grid') {
+        wrapper.innerHTML = '';
+        renderAllThumbnails(groups);
+        return;
+      }
+      
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      
+      const itemsPerRow = Math.floor(containerWidth / virtualScrollData.itemWidth) || 1;
+      const totalRows = Math.ceil(groups.length / itemsPerRow);
+      const totalWidth = groups.length * virtualScrollData.itemWidth;
+      
+      wrapper.style.width = `${totalWidth}px`;
+      wrapper.style.height = '100%';
+      wrapper.style.position = 'relative';
       wrapper.innerHTML = '';
+      
+      virtualScrollData.containerWidth = containerWidth;
+      
+      updateVirtualScroll(groups);
+      
+      container.onscroll = () => {
+        virtualScrollData.scrollLeft = container.scrollLeft;
+        requestAnimationFrame(() => updateVirtualScroll(groups));
+      };
+    }
 
+    function updateVirtualScroll(groups) {
+      const wrapper = document.getElementById('thumbnailWrapper');
+      const container = document.getElementById('thumbnailContainer');
+      
+      const scrollLeft = container.scrollLeft;
+      const containerWidth = container.clientWidth;
+      
+      const startIndex = Math.max(0, Math.floor(scrollLeft / virtualScrollData.itemWidth) - 5);
+      const endIndex = Math.min(groups.length, Math.ceil((scrollLeft + containerWidth) / virtualScrollData.itemWidth) + 5);
+      
+      if (startIndex === virtualScrollData.visibleStart && endIndex === virtualScrollData.visibleEnd) {
+        return;
+      }
+      
+      virtualScrollData.visibleStart = startIndex;
+      virtualScrollData.visibleEnd = endIndex;
+      
+      const existingItems = new Map();
+      wrapper.querySelectorAll('.thumbnail-item').forEach(item => {
+        const index = parseInt(item.dataset.index);
+        if (index >= startIndex && index < endIndex) {
+          existingItems.set(index, item);
+        } else {
+          item.remove();
+        }
+      });
+      
+      const fragment = document.createDocumentFragment();
+      
+      for (let index = startIndex; index < endIndex; index++) {
+        if (existingItems.has(index)) continue;
+        
+        const group = groups[index];
+        if (!group) continue;
+        
+        const thumbnailFile = group.jpg || group.raw;
+        if (!thumbnailFile) continue;
+        
+        const fileName = thumbnailFile.name;
+        const rating = ratingsData[fileName]?.rating || 0;
+        
+        let ratingStars = '';
+        for (let i = 1; i <= 5; i++) {
+          const isActive = i <= rating ? 'active' : '';
+          ratingStars += `<span class="thumbnail-star ${isActive}" data-rating="${i}" data-index="${index}"><i class="ri-star-fill"></i></span>`;
+        }
+
+        const thumbnailItem = document.createElement('div');
+        thumbnailItem.className = 'thumbnail-item';
+        thumbnailItem.dataset.index = index;
+        thumbnailItem.dataset.filename = fileName;
+        thumbnailItem.style.position = 'absolute';
+        thumbnailItem.style.left = `${index * virtualScrollData.itemWidth}px`;
+        thumbnailItem.style.top = '0';
+
+        let formatLabels = '';
+        if (group.jpg && group.raw) {
+          formatLabels = `
+            <div class="thumbnail-format jpg">JPG</div>
+            <div class="thumbnail-format raw">RAW</div>
+          `;
+        } else {
+          formatLabels = `
+            <div class="thumbnail-format ${thumbnailFile.type}">${thumbnailFile.type.toUpperCase()}</div>
+          `;
+        }
+
+        thumbnailItem.innerHTML = `
+          <div class="thumbnail-checkbox" data-index="${index}">
+            <i class="ri-check-line"></i>
+          </div>
+          <div class="thumbnail-image-wrapper">
+            <img class="thumbnail-image lazy" data-src="${thumbnailFile.path}" alt="${thumbnailFile.name}" loading="lazy">
+            <div class="thumbnail-overlay"></div>
+            ${formatLabels}
+          </div>
+          <div class="thumbnail-rating ${rejectedImages.has(fileName) ? 'rejected' : ''}">${ratingStars}</div>
+        `;
+
+        thumbnailItem.addEventListener('click', handleThumbnailClick);
+        thumbnailItem.addEventListener('contextmenu', handleThumbnailRightClick);
+
+        const checkbox = thumbnailItem.querySelector('.thumbnail-checkbox');
+        checkbox.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleThumbnailSelection(index);
+        });
+
+        fragment.appendChild(thumbnailItem);
+      }
+      
+      wrapper.appendChild(fragment);
+      
+      updateThumbnailCheckboxes();
+      updateThumbnailSelection(currentIndex);
+      setupLazyLoading();
+    }
+
+    function renderAllThumbnails(groups) {
+      const wrapper = document.getElementById('thumbnailWrapper');
       const fragment = document.createDocumentFragment();
 
       groups.forEach((group, index) => {
@@ -2427,18 +2569,11 @@
       });
 
       wrapper.appendChild(fragment);
-
-      // 更新复选框状态
       updateThumbnailCheckboxes();
-
-      // 更新当前选中的缩略图状态
       updateThumbnailSelection(currentIndex);
-
-      // 使用Intersection Observer实现懒加载
       setupLazyLoading();
     }
 
-    // 缩略图点击事件处理
     function handleThumbnailClick(e) {
       const thumbnailItem = e.currentTarget;
       const index = parseInt(thumbnailItem.dataset.index);
@@ -2466,11 +2601,9 @@
       toggleThumbnailSelection(index);
     }
 
-    function setupLazyLoading() {
-      const lazyImages = document.querySelectorAll('.thumbnail-image.lazy');
-      
+    function initLazyImageObserver() {
       if ('IntersectionObserver' in window) {
-        const imageObserver = new IntersectionObserver((entries, observer) => {
+        lazyImageObserver = new IntersectionObserver((entries, observer) => {
           entries.forEach(entry => {
             if (entry.isIntersecting) {
               const img = entry.target;
@@ -2482,9 +2615,15 @@
           rootMargin: '100px',
           threshold: 0.01
         });
+      }
+    }
 
+    function setupLazyLoading() {
+      const lazyImages = document.querySelectorAll('.thumbnail-image.lazy');
+      
+      if (lazyImageObserver) {
         lazyImages.forEach(img => {
-          imageObserver.observe(img);
+          lazyImageObserver.observe(img);
         });
       } else {
         lazyImages.forEach(img => {
@@ -2707,9 +2846,7 @@
       setTimeout(constrainImagePosition, 10);
     }
 
-    // 开始拖拽
     function startDrag(e) {
-      // 禁用浏览器默认行为
       e.preventDefault();
       e.stopPropagation();
       
@@ -2717,104 +2854,98 @@
         isDragging = true;
 
         const img = e.target;
-        const imgRect = img.getBoundingClientRect();
         const wrapper = document.getElementById('previewWrapper');
-        const wrapperRect = wrapper.getBoundingClientRect();
         
-        // 计算图片的实际位置（考虑缩放和偏移）
+        cachedWrapperRect = wrapper.getBoundingClientRect();
+        cachedImgRect = img.getBoundingClientRect();
+        
         const imgNaturalWidth = img.naturalWidth;
         const imgNaturalHeight = img.naturalHeight;
         const imgWidth = imgNaturalWidth * currentScale;
         const imgHeight = imgNaturalHeight * currentScale;
         
-        // 计算图片在预览区中的实际位置
-        const imgLeft = wrapperRect.left + (wrapperRect.width - imgWidth) / 2 + offsetX * currentScale;
-        const imgTop = wrapperRect.top + (wrapperRect.height - imgHeight) / 2 + offsetY * currentScale;
+        const imgLeft = cachedWrapperRect.left + (cachedWrapperRect.width - imgWidth) / 2 + offsetX * currentScale;
+        const imgTop = cachedWrapperRect.top + (cachedWrapperRect.height - imgHeight) / 2 + offsetY * currentScale;
         
-        // 计算鼠标在图片上的相对位置（相对于图片左上角）
         mouseOffsetX = e.clientX - imgLeft;
         mouseOffsetY = e.clientY - imgTop;
       }
     }
 
-    // 拖拽中
     function drag(e) {
       if (!isDragging) return;
-      // 禁用浏览器默认行为
       e.preventDefault();
       e.stopPropagation();
       
-      const img = document.querySelector('.preview-image');
-      if (!img) return;
-      
-      const wrapper = document.getElementById('previewWrapper');
-      const wrapperRect = wrapper.getBoundingClientRect();
-      
-      // 获取图片的自然尺寸
-      const imgNaturalWidth = img.naturalWidth;
-      const imgNaturalHeight = img.naturalHeight;
-      
-      // 计算缩放后的图片尺寸
-      const imgWidth = imgNaturalWidth * currentScale;
-      const imgHeight = imgNaturalHeight * currentScale;
-      
-      // 计算图片在预览区中的理想位置，使鼠标始终锁定在落点
-      // 目标：鼠标位置 = 图片左上角位置 + 鼠标在图片上的相对位置
-      const targetImgLeft = e.clientX - mouseOffsetX;
-      const targetImgTop = e.clientY - mouseOffsetY;
-      
-      // 计算图片在预览区中的理想偏移量
-      // 预览区中心位置
-      const wrapperCenterX = wrapperRect.left + wrapperRect.width / 2;
-      const wrapperCenterY = wrapperRect.top + wrapperRect.height / 2;
-      
-      // 图片中心位置
-      const imgCenterX = targetImgLeft + imgWidth / 2;
-      const imgCenterY = targetImgTop + imgHeight / 2;
-      
-      // 计算偏移量（相对于预览区中心）
-      const newOffsetX = (imgCenterX - wrapperCenterX) / currentScale;
-      const newOffsetY = (imgCenterY - wrapperCenterY) / currentScale;
-      
-      // Windows 11照片浏览器风格的拖拽逻辑
-      // 如果图片宽度没有超出视窗宽度，则不允许水平拖拽
-      let constrainedOffsetX = offsetX;
-      if (imgWidth > wrapperRect.width) {
-        const maxOffsetX = (imgWidth - wrapperRect.width) / 2;
-        constrainedOffsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, newOffsetX));
-      } else {
-        // 图片宽度没有超出，保持居中
-        constrainedOffsetX = 0;
+      if (rafId) {
+        cancelAnimationFrame(rafId);
       }
       
-      // 如果图片高度没有超出视窗高度，则不允许垂直拖拽
-      let constrainedOffsetY = offsetY;
-      if (imgHeight > wrapperRect.height) {
-        const maxOffsetY = (imgHeight - wrapperRect.height) / 2;
-        constrainedOffsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, newOffsetY));
-      } else {
-        // 图片高度没有超出，保持居中
-        constrainedOffsetY = 0;
-      }
-      
-      // 强制更新偏移量
-      offsetX = constrainedOffsetX;
-      offsetY = constrainedOffsetY;
-      
-      // 强制更新图片位置
-      img.style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
+      rafId = requestAnimationFrame(() => {
+        const img = document.querySelector('.preview-image');
+        if (!img) return;
+        
+        if (!cachedWrapperRect) {
+          const wrapper = document.getElementById('previewWrapper');
+          cachedWrapperRect = wrapper.getBoundingClientRect();
+        }
+        
+        const imgNaturalWidth = img.naturalWidth;
+        const imgNaturalHeight = img.naturalHeight;
+        
+        const imgWidth = imgNaturalWidth * currentScale;
+        const imgHeight = imgNaturalHeight * currentScale;
+        
+        const targetImgLeft = e.clientX - mouseOffsetX;
+        const targetImgTop = e.clientY - mouseOffsetY;
+        
+        const wrapperCenterX = cachedWrapperRect.left + cachedWrapperRect.width / 2;
+        const wrapperCenterY = cachedWrapperRect.top + cachedWrapperRect.height / 2;
+        
+        const imgCenterX = targetImgLeft + imgWidth / 2;
+        const imgCenterY = targetImgTop + imgHeight / 2;
+        
+        const newOffsetX = (imgCenterX - wrapperCenterX) / currentScale;
+        const newOffsetY = (imgCenterY - wrapperCenterY) / currentScale;
+        
+        let constrainedOffsetX = offsetX;
+        if (imgWidth > cachedWrapperRect.width) {
+          const maxOffsetX = (imgWidth - cachedWrapperRect.width) / 2;
+          constrainedOffsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, newOffsetX));
+        } else {
+          constrainedOffsetX = 0;
+        }
+        
+        let constrainedOffsetY = offsetY;
+        if (imgHeight > cachedWrapperRect.height) {
+          const maxOffsetY = (imgHeight - cachedWrapperRect.height) / 2;
+          constrainedOffsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, newOffsetY));
+        } else {
+          constrainedOffsetY = 0;
+        }
+        
+        offsetX = constrainedOffsetX;
+        offsetY = constrainedOffsetY;
+        
+        img.style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
+        
+        rafId = null;
+      });
     }
 
-    // 结束拖拽
     function endDrag() {
       isDragging = false;
-      // 拖拽结束后立即限制图片在视窗内
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      cachedWrapperRect = null;
+      cachedImgRect = null;
       setTimeout(() => {
         constrainImagePosition();
       }, 0);
     }
 
-    // 导航图片
     function navigateImage(direction) {
       const newIndex = currentIndex + direction;
       if (newIndex >= 0 && newIndex < filteredGroups.length) {
@@ -3760,29 +3891,40 @@
       const rating = ratingsData[file.name]?.rating || 0;
       document.getElementById('tooltipRating').textContent = rating > 0 ? `${rating}星` : '未评级';
       
-      try {
-        const stats = await window.electronAPI.fs.stat(file.path);
-        const sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
-        document.getElementById('tooltipFileSize').textContent = `${sizeMB} MB`;
-      } catch (err) {
-        document.getElementById('tooltipFileSize').textContent = '-';
+      let cachedMeta = fileMetadataCache.get(file.path);
+      
+      if (!cachedMeta) {
+        try {
+          const [stats, metadata] = await Promise.all([
+            window.electronAPI.fs.stat(file.path),
+            window.electronAPI.image.readMetadata(file.path)
+          ]);
+          
+          cachedMeta = {
+            size: (stats.size / (1024 * 1024)).toFixed(2),
+            width: null,
+            height: null
+          };
+          
+          if (metadata) {
+            const w = metadata['Image Width'] || metadata.PixelXDimension;
+            const h = metadata['Image Height'] || metadata.PixelYDimension;
+            cachedMeta.width = w ? (w.description || w) : null;
+            cachedMeta.height = h ? (h.description || h) : null;
+          }
+          
+          fileMetadataCache.set(file.path, cachedMeta);
+        } catch (err) {
+          cachedMeta = { size: '-', width: null, height: null };
+        }
       }
       
-      try {
-        const metadata = await window.electronAPI.image.readMetadata(file.path);
-        if (metadata) {
-          const width = metadata['Image Width'] || metadata.PixelXDimension;
-          const height = metadata['Image Height'] || metadata.PixelYDimension;
-          if (width && height) {
-            document.getElementById('tooltipResolution').textContent = 
-              `${width.description || width} × ${height.description || height}`;
-          } else {
-            document.getElementById('tooltipResolution').textContent = '-';
-          }
-        } else {
-          document.getElementById('tooltipResolution').textContent = '-';
-        }
-      } catch (err) {
+      document.getElementById('tooltipFileSize').textContent = `${cachedMeta.size} MB`;
+      
+      if (cachedMeta.width && cachedMeta.height) {
+        document.getElementById('tooltipResolution').textContent = 
+          `${cachedMeta.width} × ${cachedMeta.height}`;
+      } else {
         document.getElementById('tooltipResolution').textContent = '-';
       }
       

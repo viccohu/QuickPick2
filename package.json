@@ -33,6 +33,7 @@
   "dependencies": {
     "exifreader": "^4.36.2",
     "exiftool-vendored": "^35.10.1",
-    "remixicon": "^4.9.1"
+    "remixicon": "^4.9.1",
+    "sharp": "^0.34.5"
   }
 }

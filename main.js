@@ -4,6 +4,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const ExifReader = require('exifreader');
 const { exiftool } = require('exiftool-vendored');
+const sharp = require('sharp');
 
 const THUMBNAIL_SIZE = 240;
 const THUMBNAIL_QUALITY = 80;
@@ -11,10 +12,12 @@ const MAX_CACHE_ITEMS = 500;
 const CACHE_CLEANUP_THRESHOLD = 0.8;
 
 let thumbnailCache = new Map();
-let cacheAccessOrder = [];
+let cacheAccessMap = new Map();
+let cacheAccessCounter = 0;
 let cacheDir = null;
 let ratingQueue = [];
 let isProcessingRatingQueue = false;
+let metadataCache = new Map();
 
 function getCacheDir() {
   if (!cacheDir) {
@@ -35,32 +38,111 @@ function getFileHash(filePath) {
 
 function getThumbnailPath(filePath) {
   const hash = getFileHash(filePath);
-  const ext = path.extname(filePath).toLowerCase();
-  return path.join(getCacheDir(), `${hash}${ext === '.raw' ? '.jpg' : ext}`);
+  return path.join(getCacheDir(), `${hash}.jpg`);
 }
 
-function getEmbeddedJpegFromRaw(filePath) {
+function extractRawPreview(filePath) {
   try {
     const buffer = fs.readFileSync(filePath);
-    let offset = 0;
+    const ext = path.extname(filePath).toLowerCase();
     
-    while (offset < buffer.length - 4) {
-      if (buffer[offset] === 0xFF && buffer[offset + 1] === 0xD8 && buffer[offset + 2] === 0xFF) {
-        let endOffset = offset + 2;
-        while (endOffset < buffer.length - 1) {
-          if (buffer[endOffset] === 0xFF && buffer[endOffset + 1] === 0xD9) {
-            endOffset += 2;
-            return buffer.slice(offset, endOffset);
-          }
-          endOffset++;
-        }
-      }
-      offset++;
+    if (['.cr2', '.cr3'].includes(ext)) {
+      return extractCanonPreview(buffer);
+    } else if (ext === '.arw') {
+      return extractSonyPreview(buffer);
+    } else if (ext === '.nef') {
+      return extractNikonPreview(buffer);
+    } else if (['.dng', '.raw'].includes(ext)) {
+      return extractTiffPreview(buffer);
     }
-    return null;
+    
+    return extractGenericJpeg(buffer);
   } catch (error) {
+    console.error('提取RAW预览失败:', error);
     return null;
   }
+}
+
+function extractCanonPreview(buffer) {
+  let offset = 0;
+  while (offset < Math.min(buffer.length, 100000)) {
+    if (buffer[offset] === 0xFF && buffer[offset + 1] === 0xD8) {
+      let end = offset + 2;
+      while (end < buffer.length - 1) {
+        if (buffer[end] === 0xFF && buffer[end + 1] === 0xD9) {
+          return buffer.slice(offset, end + 2);
+        }
+        end++;
+      }
+    }
+    offset++;
+  }
+  return null;
+}
+
+function extractSonyPreview(buffer) {
+  if (buffer.length < 8) return null;
+  
+  const le = buffer.readUInt32LE(4);
+  const offset = le === 0x49492A00 ? 8 : 0;
+  
+  for (let i = offset; i < Math.min(buffer.length, 50000); i++) {
+    if (buffer[i] === 0xFF && buffer[i + 1] === 0xD8) {
+      let end = i + 2;
+      while (end < buffer.length - 1) {
+        if (buffer[end] === 0xFF && buffer[end + 1] === 0xD9) {
+          return buffer.slice(i, end + 2);
+        }
+        end++;
+      }
+    }
+  }
+  return null;
+}
+
+function extractNikonPreview(buffer) {
+  for (let i = 0; i < Math.min(buffer.length, 100000); i++) {
+    if (buffer[i] === 0xFF && buffer[i + 1] === 0xD8) {
+      let end = i + 2;
+      while (end < buffer.length - 1) {
+        if (buffer[end] === 0xFF && buffer[end + 1] === 0xD9) {
+          return buffer.slice(i, end + 2);
+        }
+        end++;
+      }
+    }
+  }
+  return null;
+}
+
+function extractTiffPreview(buffer) {
+  for (let i = 0; i < Math.min(buffer.length, 200000); i++) {
+    if (buffer[i] === 0xFF && buffer[i + 1] === 0xD8) {
+      let end = i + 2;
+      while (end < buffer.length - 1) {
+        if (buffer[end] === 0xFF && buffer[end + 1] === 0xD9) {
+          return buffer.slice(i, end + 2);
+        }
+        end++;
+      }
+    }
+  }
+  return null;
+}
+
+function extractGenericJpeg(buffer) {
+  for (let i = 0; i < Math.min(buffer.length, 500000); i++) {
+    if (buffer[i] === 0xFF && buffer[i + 1] === 0xD8) {
+      let end = i + 2;
+      while (end < buffer.length - 1) {
+        if (buffer[end] === 0xFF && buffer[end + 1] === 0xD9) {
+          return buffer.slice(i, end + 2);
+        }
+        end++;
+      }
+    }
+  }
+  return null;
 }
 
 async function generateThumbnail(filePath, maxSize = THUMBNAIL_SIZE) {
@@ -70,7 +152,7 @@ async function generateThumbnail(filePath, maxSize = THUMBNAIL_SIZE) {
     
     let imageBuffer;
     if (isRaw) {
-      imageBuffer = getEmbeddedJpegFromRaw(filePath);
+      imageBuffer = extractRawPreview(filePath);
       if (!imageBuffer) {
         return null;
       }
@@ -78,65 +160,34 @@ async function generateThumbnail(filePath, maxSize = THUMBNAIL_SIZE) {
       imageBuffer = fs.readFileSync(filePath);
     }
     
-    const dimensions = getImageDimensions(imageBuffer);
-    if (!dimensions) {
+    try {
+      const thumbnail = await sharp(imageBuffer)
+        .resize(maxSize, maxSize, {
+          fit: 'inside',
+          withoutEnlargement: true,
+          fastShrinkOnLoad: true
+        })
+        .jpeg({
+          quality: THUMBNAIL_QUALITY,
+          mozjpeg: true,
+          chromaSubsampling: '4:2:0'
+        })
+        .toBuffer();
+      
+      return thumbnail;
+    } catch (sharpError) {
+      console.error('Sharp处理失败:', sharpError);
       return imageBuffer;
     }
-    
-    const { width, height } = dimensions;
-    const scale = Math.min(maxSize / width, maxSize / height, 1);
-    
-    if (scale >= 1) {
-      return imageBuffer;
-    }
-    
-    return imageBuffer;
   } catch (error) {
     console.error('生成缩略图失败:', error);
     return null;
   }
 }
 
-function getImageDimensions(buffer) {
-  try {
-    let offset = 0;
-    
-    if (buffer[0] !== 0xFF || buffer[1] !== 0xD8) {
-      return null;
-    }
-    
-    offset = 2;
-    while (offset < buffer.length - 4) {
-      if (buffer[offset] !== 0xFF) break;
-      
-      const marker = buffer[offset + 1];
-      
-      if (marker === 0xC0 || marker === 0xC2) {
-        const height = buffer.readUInt16BE(offset + 5);
-        const width = buffer.readUInt16BE(offset + 7);
-        return { width, height };
-      }
-      
-      if (marker >= 0xD0 && marker <= 0xD9) {
-        offset += 2;
-      } else {
-        const length = buffer.readUInt16BE(offset + 2);
-        offset += 2 + length;
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    return null;
-  }
-}
-
 function updateCacheAccess(key) {
-  const index = cacheAccessOrder.indexOf(key);
-  if (index !== -1) {
-    cacheAccessOrder.splice(index, 1);
-  }
-  cacheAccessOrder.push(key);
+  cacheAccessCounter++;
+  cacheAccessMap.set(key, cacheAccessCounter);
 }
 
 function evictLRU() {
@@ -144,10 +195,14 @@ function evictLRU() {
     return;
   }
   
+  const entries = Array.from(cacheAccessMap.entries());
+  entries.sort((a, b) => a[1] - b[1]);
+  
   const itemsToEvict = Math.floor(MAX_CACHE_ITEMS * 0.2);
-  for (let i = 0; i < itemsToEvict && cacheAccessOrder.length > 0; i++) {
-    const key = cacheAccessOrder.shift();
+  for (let i = 0; i < itemsToEvict && i < entries.length; i++) {
+    const key = entries[i][0];
     thumbnailCache.delete(key);
+    cacheAccessMap.delete(key);
   }
 }
 
