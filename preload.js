@@ -17,7 +17,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     stat: (filePath) => ipcRenderer.invoke('fs:stat', filePath),
     copyFile: (source, target) => ipcRenderer.invoke('fs:copyFile', { source, target }),
     existsSync: (path) => ipcRenderer.invoke('fs:existsSync', path),
-    mkdirSync: (path, options) => ipcRenderer.invoke('fs:mkdirSync', { path, options })
+    mkdirSync: (path, options) => ipcRenderer.invoke('fs:mkdirSync', { path, options }),
+    deleteFile: (filePath) => ipcRenderer.invoke('fs:deleteFile', filePath)
   },
   
   image: {

@@ -46,6 +46,62 @@
       color: #667eea;
     }
 
+    .title-bar-center {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      -webkit-app-region: no-drag;
+    }
+
+    .title-bar-stats {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 4px;
+      font-size: 11px;
+      color: #888;
+    }
+
+    .title-bar-stats-item {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .title-bar-stats-item i {
+      font-size: 10px;
+      color: #667eea;
+    }
+
+    .title-bar-stats-divider {
+      width: 1px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 0 4px;
+    }
+
+    .title-bar-help {
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.04);
+      color: #888;
+      transition: all 0.2s;
+    }
+
+    .title-bar-help:hover {
+      background: rgba(102, 126, 234, 0.15);
+      color: #667eea;
+    }
+
     /* 窗口控制按钮 - 黑色主题 */
     .window-controls {
       display: flex;
@@ -207,8 +263,42 @@
       background: rgba(15, 15, 15, 0.95);
       backdrop-filter: blur(20px);
       color: white;
-      gap: 5px;
+      gap: 12px;
       border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .rating-stars {
+      display: flex;
+      gap: 5px;
+    }
+
+    .batch-info-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      background: rgba(102, 126, 234, 0.15);
+      border-radius: 4px;
+      font-size: 12px;
+      color: #667eea;
+    }
+
+    .batch-info-inline strong {
+      font-weight: 600;
+    }
+
+    .batch-cancel-inline {
+      background: none;
+      border: none;
+      color: #667eea;
+      cursor: pointer;
+      padding: 2px;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .batch-cancel-inline:hover {
+      color: #e0e0e0;
     }
 
     .star {
@@ -293,7 +383,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+      background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.045) 100%);
       border-radius: 4px 4px 0 0;
       opacity: 0;
       transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -844,70 +934,158 @@
       font-size: 12px;
     }
 
-    .batch-rating-bar {
-      position: fixed;
-      bottom: 160px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(20, 20, 20, 0.98);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 16px 24px;
-      display: none;
-      align-items: center;
-      gap: 16px;
-      z-index: 100;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    /* 废片标记 - 评级栏背景变红 */
+    .thumbnail-rating.rejected {
+      background: rgba(241, 69, 69, 0.49) !important;
     }
 
-    .batch-rating-bar.visible {
-      display: flex;
+    .thumbnail-rating.rejected .thumbnail-star {
+      color: rgba(255, 255, 255, 0.5) !important;
     }
 
-    .batch-info {
-      color: #888;
-      font-size: 13px;
+    .thumbnail-rating.rejected .thumbnail-star.active {
+      color: white !important;
     }
 
-    .batch-info strong {
-      color: #667eea;
-    }
-
-    .batch-stars {
-      display: flex;
-      gap: 8px;
-    }
-
-    .batch-star-btn {
-      width: 36px;
-      height: 36px;
-      background: rgba(255, 255, 255, 0.04);
-      border: none;
-      border-radius: 6px;
-      color: #888;
-      font-size: 18px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .batch-star-btn:hover {
-      background: rgba(102, 126, 234, 0.2);
-      color: #667eea;
-    }
-
-    .batch-cancel {
+    /* 删除按钮 */
+    .delete-button {
       padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.04);
-      border: none;
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
       border-radius: 6px;
-      color: #888;
+      cursor: pointer;
       font-size: 13px;
+      font-weight: 500;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .delete-button:hover:not(.disabled) {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    .delete-button.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* 删除确认对话框 */
+    .delete-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      z-index: 9999;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .delete-modal.visible {
+      display: flex;
+    }
+
+    .delete-modal-content {
+      background: #1a1a1a;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .delete-modal-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .delete-modal-header i {
+      font-size: 24px;
+      color: #ef4444;
+    }
+
+    .delete-modal-header h3 {
+      color: #e0e0e0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .delete-modal-body {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .delete-modal-body strong {
+      color: #ef4444;
+    }
+
+    .delete-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .delete-option {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .delete-option:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .delete-option i {
+      font-size: 18px;
+      color: #ef4444;
+    }
+
+    .delete-option-text {
+      color: #e0e0e0;
+      font-size: 14px;
+    }
+
+    .delete-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .delete-modal-btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
       cursor: pointer;
       transition: all 0.2s;
     }
 
-    .batch-cancel:hover {
+    .delete-modal-btn.cancel {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #888;
+    }
+
+    .delete-modal-btn.cancel:hover {
       background: rgba(255, 255, 255, 0.08);
       color: #e0e0e0;
     }
@@ -1205,8 +1383,8 @@
     }
 
     .detail-view .thumbnail-image-wrapper {
-      width: 180px;
-      height: 110px;
+      width: 100%;
+      height: 100px;
     }
 
     .detail-view .thumbnail-item::after {
@@ -1376,6 +1554,18 @@
         <i class="ri-image-line"></i>
         QuickPick - 图片查看管理器
       </div>
+      <div class="title-bar-center">
+        <div class="title-bar-stats" id="titleBarStats">
+          <span class="title-bar-stats-item"><i class="ri-star-fill"></i><span id="statsTotal">0</span></span>
+          <span class="title-bar-stats-divider"></span>
+          <span class="title-bar-stats-item" title="5星"><span>5:</span><span id="stats5">0</span></span>
+          <span class="title-bar-stats-item" title="4星"><span>4:</span><span id="stats4">0</span></span>
+          <span class="title-bar-stats-item" title="3星"><span>3:</span><span id="stats3">0</span></span>
+          <span class="title-bar-stats-item" title="2星"><span>2:</span><span id="stats2">0</span></span>
+          <span class="title-bar-stats-item" title="1星"><span>1:</span><span id="stats1">0</span></span>
+        </div>
+        <button class="title-bar-help" id="helpButton" title="快捷键帮助"><i class="ri-keyboard-line"></i></button>
+      </div>
       <div class="window-controls">
         <button class="control-button minimize"><i class="ri-subtract-line"></i></button>
         <button class="control-button maximize"><i class="ri-checkbox-blank-line"></i></button>
@@ -1405,16 +1595,23 @@
           <span></span>
         </div>
       </div>
-      <div class="rating-container">
-        <span class="star" data-rating="1"><i class="ri-star-fill"></i></span>
-        <span class="star" data-rating="2"><i class="ri-star-fill"></i></span>
-        <span class="star" data-rating="3"><i class="ri-star-fill"></i></span>
-        <span class="star" data-rating="4"><i class="ri-star-fill"></i></span>
-        <span class="star" data-rating="5"><i class="ri-star-fill"></i></span>
+      <div class="rating-container" id="ratingContainer">
+        <div class="batch-info-inline" id="batchInfoInline" style="display: none;">
+          <span>已选择 <strong id="batchCountInline">0</strong> 张</span>
+          <button class="batch-cancel-inline" id="batchCancelInline" title="取消选择"><i class="ri-close-line"></i></button>
+        </div>
+        <div class="rating-stars">
+          <span class="star" data-rating="1"><i class="ri-star-fill"></i></span>
+          <span class="star" data-rating="2"><i class="ri-star-fill"></i></span>
+          <span class="star" data-rating="3"><i class="ri-star-fill"></i></span>
+          <span class="star" data-rating="4"><i class="ri-star-fill"></i></span>
+          <span class="star" data-rating="5"><i class="ri-star-fill"></i></span>
+        </div>
       </div>
     </div>
 
     <!-- 底部缩略图区域 -->
+    <div class="thumbnail-resize-handle" id="thumbnailResizeHandle"></div>
     <div class="thumbnail-container" id="thumbnailContainer">
       <div class="thumbnail-wrapper" id="thumbnailWrapper">
       </div>
@@ -1451,15 +1648,6 @@
           <span class="filter-star" data-rating="5"><i class="ri-star-fill"></i></span>
         </div>
         <span class="filter-status" id="filterStatus">未筛选</span>
-        <div class="rating-stats" id="ratingStats">
-          <span class="rating-stats-item"><i class="ri-star-fill"></i><span id="statsTotal">0</span></span>
-          <span class="rating-stats-divider"></span>
-          <span class="rating-stats-item" title="5星"><span>5:</span><span id="stats5">0</span></span>
-          <span class="rating-stats-item" title="4星"><span>4:</span><span id="stats4">0</span></span>
-          <span class="rating-stats-item" title="3星"><span>3:</span><span id="stats3">0</span></span>
-          <span class="rating-stats-item" title="2星"><span>2:</span><span id="stats2">0</span></span>
-          <span class="rating-stats-item" title="1星"><span>1:</span><span id="stats1">0</span></span>
-        </div>
       </div>
       <div class="view-toggle-container">
         <button class="view-btn active" data-view="grid" title="网格视图">
@@ -1509,8 +1697,38 @@
       <button class="magnifier-toggle" id="magnifierToggle" title="放大镜 (默认关闭)">
         <i class="ri-search-eye-line"></i>
       </button>
-      <button class="help-button" id="helpButton" title="快捷键帮助"><i class="ri-keyboard-line"></i></button>
       <button class="export-button" id="exportButton"><i class="ri-download-2-line"></i>导出文件</button>
+      <button class="delete-button disabled" id="deleteButton" disabled><i class="ri-delete-bin-line"></i>删除废片</button>
+    </div>
+
+    <!-- 删除确认对话框 -->
+    <div class="delete-modal" id="deleteModal">
+      <div class="delete-modal-content">
+        <div class="delete-modal-header">
+          <i class="ri-error-warning-line"></i>
+          <h3>确认删除</h3>
+        </div>
+        <div class="delete-modal-body">
+          您已标记 <strong id="rejectedCount">0</strong> 张废片，请选择删除方式：
+        </div>
+        <div class="delete-options">
+          <div class="delete-option" id="deleteBoth">
+            <i class="ri-file-copy-line"></i>
+            <span class="delete-option-text">删除 JPG 和 RAW 文件</span>
+          </div>
+          <div class="delete-option" id="deleteJpg">
+            <i class="ri-image-line"></i>
+            <span class="delete-option-text">仅删除 JPG 文件</span>
+          </div>
+          <div class="delete-option" id="deleteRaw">
+            <i class="ri-file-unknow-line"></i>
+            <span class="delete-option-text">仅删除 RAW 文件</span>
+          </div>
+        </div>
+        <div class="delete-modal-footer">
+          <button class="delete-modal-btn cancel" id="deleteCancel">取消</button>
+        </div>
+      </div>
     </div>
 
     <!-- EXIF信息面板 -->
@@ -1607,20 +1825,6 @@
       </div>
     </div>
 
-    <!-- 批量评级栏 -->
-    <div class="batch-rating-bar" id="batchRatingBar">
-      <div class="batch-info">已选择 <strong id="batchCount">0</strong> 张图片</div>
-      <div class="batch-stars">
-        <button class="batch-star-btn" data-rating="1" title="1星"><i class="ri-star-fill"></i></button>
-        <button class="batch-star-btn" data-rating="2" title="2星"><i class="ri-star-fill"></i></button>
-        <button class="batch-star-btn" data-rating="3" title="3星"><i class="ri-star-fill"></i></button>
-        <button class="batch-star-btn" data-rating="4" title="4星"><i class="ri-star-fill"></i></button>
-        <button class="batch-star-btn" data-rating="5" title="5星"><i class="ri-star-fill"></i></button>
-        <button class="batch-star-btn" data-rating="0" title="取消评级"><i class="ri-close-line"></i></button>
-      </div>
-      <button class="batch-cancel" id="batchCancel">取消选择</button>
-    </div>
-
     <!-- 快捷键帮助弹窗 -->
     <div class="help-modal" id="helpModal">
       <div class="help-modal-content">
@@ -1675,24 +1879,29 @@
     let filterCondition = 'all';
     let filterRating = 0;
     let isDragging = false;
-    let startX = 0;
-    let startY = 0;
     let mouseOffsetX = 0;
     let mouseOffsetY = 0;
     let currentScale = 1;
     let offsetX = 0;
     let offsetY = 0;
 
+    function joinPath(...parts) {
+      return parts.join('/').replace(/\/+/g, '/');
+    }
+
+    const RAW_EXTENSIONS = ['.cr2', '.cr3', '.arw', '.nef', '.dng', '.raw'];
+
+    function isRawFile(path) {
+      const ext = path.toLowerCase();
+      return RAW_EXTENSIONS.some(e => ext.endsWith(e));
+    }
+
+    let currentLoadingId = 0;
+
     const MAX_IMAGE_CACHE = 100;
     const MAX_THUMBNAIL_CACHE = 200;
-    const PREVIEW_LOAD_DELAY = 150;
-    
-    let imageCache = new Map();
-    let imageCacheOrder = [];
-    let thumbnailCache = new Map();
-    let thumbnailCacheOrder = [];
-    let pendingPreviewLoads = new Map();
-    let currentLoadingId = 0;
+
+
 
     class LRUCache {
       constructor(maxSize) {
@@ -1759,7 +1968,7 @@
       initBatchMode();
       initThumbnailResize();
       initViewToggle();
-      initThemeSelector();
+      // initThemeSelector();
       initFileTooltip();
     });
 
@@ -1818,6 +2027,18 @@
 
       // 导出
       document.getElementById('exportButton').addEventListener('click', exportFiles);
+
+      // 删除废片
+      document.getElementById('deleteButton').addEventListener('click', showDeleteModal);
+      document.getElementById('deleteCancel').addEventListener('click', hideDeleteModal);
+      document.getElementById('deleteModal').addEventListener('click', (e) => {
+        if (e.target.id === 'deleteModal') {
+          hideDeleteModal();
+        }
+      });
+      document.getElementById('deleteBoth').addEventListener('click', () => deleteRejectedFiles('both'));
+      document.getElementById('deleteJpg').addEventListener('click', () => deleteRejectedFiles('jpg'));
+      document.getElementById('deleteRaw').addEventListener('click', () => deleteRejectedFiles('raw'));
 
       // 快捷键帮助
       document.getElementById('helpButton').addEventListener('click', () => {
@@ -1891,7 +2112,7 @@
           case 'Delete':
           case 'Backspace':
             e.preventDefault();
-            markAsRejected();
+            toggleRejected();
             break;
           case ' ':
             e.preventDefault();
@@ -2034,17 +2255,15 @@
           jpgFiles.push(...files.filter(file => {
             const ext = file.toLowerCase();
             return ext.endsWith('.jpg') || ext.endsWith('.jpeg');
-          }).map(file => ({ path: `${jpgPath}\\${file}`, name: file, type: 'jpg' })));
+          }).map(file => ({ path: joinPath(jpgPath, file), name: file, type: 'jpg' })));
         }
 
         // 扫描RAW文件
         if (rawPath) {
           const files = await window.electronAPI.fs.readdir(rawPath);
           rawFiles.push(...files.filter(file => {
-            const ext = file.toLowerCase();
-            return ext.endsWith('.cr2') || ext.endsWith('.cr3') || ext.endsWith('.arw') || 
-                   ext.endsWith('.nef') || ext.endsWith('.dng');
-          }).map(file => ({ path: `${rawPath}\\${file}`, name: file, type: 'raw' })));
+            return isRawFile(file);
+          }).map(file => ({ path: joinPath(rawPath, file), name: file, type: 'raw' })));
         }
 
         // 生成图片组
@@ -2186,10 +2405,11 @@
             <div class="thumbnail-overlay"></div>
             ${formatLabels}
           </div>
-          <div class="thumbnail-rating">${ratingStars}</div>
+          <div class="thumbnail-rating ${rejectedImages.has(fileName) ? 'rejected' : ''}">${ratingStars}</div>
         `;
 
         thumbnailItem.addEventListener('click', handleThumbnailClick);
+        thumbnailItem.addEventListener('contextmenu', handleThumbnailRightClick);
 
         const checkbox = thumbnailItem.querySelector('.thumbnail-checkbox');
         checkbox.addEventListener('click', (e) => {
@@ -2222,6 +2442,19 @@
       } else {
         showImage(index);
       }
+    }
+
+    // 缩略图右键点击事件处理
+    function handleThumbnailRightClick(e) {
+      e.preventDefault();
+      
+      // 只在批量模式下处理右键点击
+      if (!batchMode) return;
+      
+      const thumbnailItem = e.currentTarget;
+      const index = parseInt(thumbnailItem.dataset.index);
+      
+      toggleThumbnailSelection(index);
     }
 
     function setupLazyLoading() {
@@ -2261,12 +2494,8 @@
         img.classList.remove('lazy');
         return;
       }
-      
-      const ext = filePath.toLowerCase();
-      const isRaw = ext.endsWith('.cr2') || ext.endsWith('.cr3') || ext.endsWith('.arw') || 
-                    ext.endsWith('.nef') || ext.endsWith('.dng') || ext.endsWith('.raw');
-      
-      if (isRaw) {
+
+      if (isRawFile(filePath)) {
         try {
           const result = await window.electronAPI.image.getThumbnail(filePath, 240);
           if (result.data) {
@@ -2328,12 +2557,10 @@
       previewWrapper.innerHTML = '';
 
       const loadingId = ++currentLoadingId;
-      
+
       const showProgressiveImage = async () => {
-        const ext = displayFile.path.toLowerCase();
-        const isRaw = ext.endsWith('.cr2') || ext.endsWith('.cr3') || ext.endsWith('.arw') || 
-                      ext.endsWith('.nef') || ext.endsWith('.dng') || ext.endsWith('.raw');
-        
+        const isRaw = isRawFile(displayFile.path);
+
         let lowQualitySrc = null;
         let highQualitySrc = null;
         
@@ -2458,19 +2685,17 @@
 
     // 缩放图片
     function scaleImage(factor, x, y) {
-      const newScale = Math.max(1, currentScale * factor); // 最小缩放到初始大小（100%）
+      const img = document.querySelector('.preview-image');
+      if (!img) return;
+
+      const newScale = Math.max(1, currentScale * factor);
       currentScale = newScale;
-      
-      // 缩放时图片始终居中
+
       offsetX = 0;
       offsetY = 0;
-      
-      const img = document.querySelector('.preview-image');
-      if (img) {
-        updateImageTransform(img);
-        // 限制图片在视窗内
-        setTimeout(constrainImagePosition, 10);
-      }
+
+      updateImageTransform(img);
+      setTimeout(constrainImagePosition, 10);
     }
 
     // 开始拖拽
@@ -2481,10 +2706,7 @@
       
       if (e.target.classList.contains('preview-image')) {
         isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        
-        // 计算鼠标在图片上的相对位置
+
         const img = e.target;
         const imgRect = img.getBoundingClientRect();
         const wrapper = document.getElementById('previewWrapper');
@@ -2670,16 +2892,7 @@
       magnifier.classList.remove('visible');
     }
 
-    // 缩放图片
-    function scaleImage(factor) {
-      const img = document.querySelector('.preview-image');
-      if (!img) return;
-      
-      currentScale *= factor;
-      currentScale = Math.max(0.1, Math.min(10, currentScale));
-      
-      img.style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
-    }
+
 
     // 重置缩放
     function resetZoom() {
@@ -2706,13 +2919,13 @@
     }
 
     // 标记为废片
-    function markAsRejected() {
-      const group = filteredGroups[currentIndex];
-      if (!group) return;
+    // function markAsRejected() {
+    //   const group = filteredGroups[currentIndex];
+    //   if (!group) return;
       
-      // 设置为0星表示废片
-      setRating(0);
-    }
+    //   // 设置为0星表示废片
+    //   setRating(0);
+    // }
 
     // 切换标记
     function toggleMark() {
@@ -2744,34 +2957,28 @@
     let batchMode = false;
     let selectedThumbnails = new Set();
 
+    // 废片标记
+    let rejectedImages = new Set();
+
     function initBatchMode() {
       const batchToggle = document.getElementById('batchToggle');
-      const batchRatingBar = document.getElementById('batchRatingBar');
-      const batchCancel = document.getElementById('batchCancel');
+      const batchCancelInline = document.getElementById('batchCancelInline');
 
       batchToggle.addEventListener('click', toggleBatchMode);
-      batchCancel.addEventListener('click', clearBatchSelection);
-
-      // 批量评级按钮
-      document.querySelectorAll('.batch-star-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const rating = parseInt(btn.dataset.rating);
-          await batchSetRating(rating);
-        });
-      });
+      batchCancelInline.addEventListener('click', clearBatchSelection);
     }
 
     function toggleBatchMode() {
       batchMode = !batchMode;
       const batchToggle = document.getElementById('batchToggle');
-      const batchRatingBar = document.getElementById('batchRatingBar');
+      const batchInfoInline = document.getElementById('batchInfoInline');
       
       batchToggle.classList.toggle('active', batchMode);
       
       if (batchMode) {
-        batchRatingBar.classList.add('visible');
+        batchInfoInline.style.display = 'flex';
       } else {
-        batchRatingBar.classList.remove('visible');
+        batchInfoInline.style.display = 'none';
         selectedThumbnails.clear();
       }
       
@@ -2794,7 +3001,7 @@
     }
 
     function updateBatchCount() {
-      document.getElementById('batchCount').textContent = selectedThumbnails.size;
+      document.getElementById('batchCountInline').textContent = selectedThumbnails.size;
     }
 
     function toggleThumbnailSelection(index) {
@@ -2805,6 +3012,124 @@
       }
       updateThumbnailCheckboxes();
       updateBatchCount();
+    }
+
+    // 废片标记功能
+    function toggleRejected() {
+      const group = filteredGroups[currentIndex];
+      if (!group) return;
+
+      const file = group.jpg || group.raw;
+      if (!file) return;
+
+      const fileName = file.name;
+      
+      if (rejectedImages.has(fileName)) {
+        rejectedImages.delete(fileName);
+      } else {
+        rejectedImages.add(fileName);
+      }
+
+      updateRejectedBadge(currentIndex);
+      updateDeleteButton();
+    }
+
+    function updateRejectedBadge(index) {
+      const thumbnailItem = document.querySelector(`.thumbnail-item[data-index="${index}"]`);
+      if (!thumbnailItem) return;
+
+      const group = filteredGroups[index];
+      if (!group) return;
+
+      const file = group.jpg || group.raw;
+      if (!file) return;
+
+      const fileName = file.name;
+      const isRejected = rejectedImages.has(fileName);
+
+      const ratingDiv = thumbnailItem.querySelector('.thumbnail-rating');
+      if (ratingDiv) {
+        if (isRejected) {
+          ratingDiv.classList.add('rejected');
+        } else {
+          ratingDiv.classList.remove('rejected');
+        }
+      }
+    }
+
+    function updateDeleteButton() {
+      const deleteBtn = document.getElementById('deleteButton');
+      if (rejectedImages.size > 0) {
+        deleteBtn.disabled = false;
+        deleteBtn.classList.remove('disabled');
+      } else {
+        deleteBtn.disabled = true;
+        deleteBtn.classList.add('disabled');
+      }
+    }
+
+    // 删除对话框
+    function showDeleteModal() {
+      if (rejectedImages.size === 0) return;
+      document.getElementById('rejectedCount').textContent = rejectedImages.size;
+      document.getElementById('deleteModal').classList.add('visible');
+    }
+
+    function hideDeleteModal() {
+      document.getElementById('deleteModal').classList.remove('visible');
+    }
+
+    async function deleteRejectedFiles(mode) {
+      hideDeleteModal();
+      
+      const filesToDelete = [];
+      
+      for (const fileName of rejectedImages) {
+        const group = imageGroups.find(g => 
+          (g.jpg && g.jpg.name === fileName) || 
+          (g.raw && g.raw.name === fileName)
+        );
+        
+        if (!group) continue;
+        
+        if (mode === 'both') {
+          if (group.jpg) filesToDelete.push(group.jpg.path);
+          if (group.raw) filesToDelete.push(group.raw.path);
+        } else if (mode === 'jpg' && group.jpg) {
+          filesToDelete.push(group.jpg.path);
+        } else if (mode === 'raw' && group.raw) {
+          filesToDelete.push(group.raw.path);
+        }
+      }
+
+      if (filesToDelete.length === 0) {
+        showMessage('提示', '没有可删除的文件', 'info');
+        return;
+      }
+
+      showProgress('删除文件...');
+      let deleted = 0;
+
+      for (const filePath of filesToDelete) {
+        try {
+          await window.electronAPI.fs.deleteFile(filePath);
+          deleted++;
+          updateProgress(deleted, filesToDelete.length);
+        } catch (error) {
+          console.error(`删除文件失败: ${filePath}`, error);
+        }
+      }
+
+      hideProgress();
+      
+      // 清空废片标记
+      rejectedImages.clear();
+      updateDeleteButton();
+      
+      // 重新加载图片
+      await loadImages();
+      
+      showMessage('删除完成', `已删除 ${deleted} 个文件`, 'info');
     }
 
     async function batchSetRating(rating) {
@@ -2879,8 +3204,8 @@
         if (metadata) {
           displayExifData(metadata, file);
         } else {
-        clearExifDisplay();
-      }
+          clearExifDisplay();
+        }
       } catch (error) {
         console.error('读取EXIF信息失败:', error);
         clearExifDisplay();
@@ -2961,25 +3286,7 @@
       return value;
     }
 
-    // 进度指示器
-    function showProgress(title) {
-      const overlay = document.getElementById('progressOverlay');
-      document.getElementById('progressTitle').textContent = title || '处理中...';
-      document.getElementById('progressBar').style.width = '0%';
-      document.getElementById('progressText').textContent = '0 / 0';
-      overlay.classList.add('visible');
-    }
 
-    function hideProgress() {
-      const overlay = document.getElementById('progressOverlay');
-      overlay.classList.remove('visible');
-    }
-
-    function updateProgress(current, total, text) {
-      const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
-      document.getElementById('progressBar').style.width = percentage + '%';
-      document.getElementById('progressText').textContent = text || `${current} / ${total}`;
-    }
 
     // 更新星级显示
     function updateRatingDisplay(filePath) {
@@ -2995,6 +3302,12 @@
 
     // 设置星级
     async function setRating(rating) {
+      // 如果在批量模式下，调用批量评级
+      if (batchMode && selectedThumbnails.size > 0) {
+        await batchSetRating(rating);
+        return;
+      }
+
       const group = filteredGroups[currentIndex];
       if (!group) return;
 
@@ -3190,19 +3503,19 @@
         for (const { group, rating } of filesToExport) {
           // 4星及以下：仅导出JPG
           if (rating <= 4 && group.jpg) {
-            const targetPath = `${exportPath}\\JPG_Export\\${group.jpg.name}`;
+            const targetPath = joinPath(exportPath, 'JPG_Export', group.jpg.name);
             await window.electronAPI.fs.copyFile(group.jpg.path, targetPath);
             jpgCount++;
           }
           // 5星：导出JPG和RAW
           else if (rating === 5) {
             if (group.jpg) {
-              const targetPath = `${exportPath}\\JPG_Export\\${group.jpg.name}`;
+              const targetPath = joinPath(exportPath, 'JPG_Export', group.jpg.name);
               await window.electronAPI.fs.copyFile(group.jpg.path, targetPath);
               jpgCount++;
             }
             if (group.raw) {
-              const targetPath = `${exportPath}\\RAW_Export\\${group.raw.name}`;
+              const targetPath = joinPath(exportPath, 'RAW_Export', group.raw.name);
               await window.electronAPI.fs.copyFile(group.raw.path, targetPath);
               rawCount++;
             }
@@ -3287,24 +3600,7 @@
       }
     }
 
-    // 保存星级数据
-    async function saveRatingsData() {
-      try {
-        // 遍历ratingsData，保存每个文件的评级
-        for (const group of imageGroups) {
-          if (group.jpg && ratingsData[group.jpg.name]) {
-            await window.electronAPI.image.saveRating(group.jpg.path, ratingsData[group.jpg.name].rating);
-          }
-          if (group.raw && ratingsData[group.raw.name]) {
-            await window.electronAPI.image.saveRating(group.raw.path, ratingsData[group.raw.name].rating);
-          }
-        }
-      } catch (error) {
-        console.error('保存星级数据失败:', error);
-      }
-    }
 
-    // 显示消息框
     function showMessage(title, message, type) {
       window.electronAPI.showMessageBox({
         title: title,
@@ -3370,36 +3666,36 @@
       
       if (view === 'detail') {
         container.classList.add('detail-view');
-      } 
+      }
       
       updateThumbnails(filteredGroups);
     }
 
-    function initThemeSelector() {
-      const themeBtn = document.getElementById('themeBtn');
-      const themeDropdown = document.getElementById('themeDropdown');
+    // function initThemeSelector() {
+    //   // const themeBtn = document.getElementById('themeBtn');
+    //   const themeDropdown = document.getElementById('themeDropdown');
       
-      themeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        themeDropdown.classList.toggle('visible');
-      });
+    //   // themeBtn.addEventListener('click', (e) => {
+    //   //   e.stopPropagation();
+    //   //   themeDropdown.classList.toggle('visible');
+    //   // });
       
-      document.addEventListener('click', () => {
-        themeDropdown.classList.remove('visible');
-      });
+    //   document.addEventListener('click', () => {
+    //     themeDropdown.classList.remove('visible');
+    //   });
       
-      themeDropdown.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
+    //   themeDropdown.addEventListener('click', (e) => {
+    //     e.stopPropagation();
+    //   });
       
-      document.querySelectorAll('.theme-option').forEach(option => {
-        option.addEventListener('click', () => {
-          const theme = option.dataset.theme;
-          setTheme(theme);
-          themeDropdown.classList.remove('visible');
-        });
-      });
-    }
+    //   document.querySelectorAll('.theme-option').forEach(option => {
+    //     option.addEventListener('click', () => {
+    //       const theme = option.dataset.theme;
+    //       setTheme(theme);
+    //       themeDropdown.classList.remove('visible');
+    //     });
+    //   });
+    // }
     
     function setTheme(theme) {
       currentTheme = theme;
@@ -3556,19 +3852,7 @@
       }
     }
 
-    const fs = {
-      existsSync: async (path) => {
-        return await window.electronAPI.fs.existsSync(path);
-      },
-      mkdirSync: async (path, options) => {
-        return await window.electronAPI.fs.mkdirSync(path, options);
-      },
-      readFileSync: (path, encoding) => {
-        return '{}';
-      },
-      writeFileSync: (path, content, encoding) => {
-      }
-    };
+
   </script>
 </body>
 </html>

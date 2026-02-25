@@ -339,6 +339,19 @@ ipcMain.handle('fs:mkdirSync', (event, { path, options }) => {
   return fs.mkdirSync(path, options);
 });
 
+ipcMain.handle('fs:deleteFile', async (event, filePath) => {
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('删除文件失败:', error);
+    throw error;
+  }
+});
+
 // 监听图片评级操作
 ipcMain.handle('image:read-rating', (event, filePath) => {
   return getImageRating(filePath);
