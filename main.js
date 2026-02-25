@@ -1,8 +1,172 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const ExifReader = require('exifreader');
 const { exiftool } = require('exiftool-vendored');
+
+const THUMBNAIL_SIZE = 240;
+const THUMBNAIL_QUALITY = 80;
+const MAX_CACHE_ITEMS = 500;
+const CACHE_CLEANUP_THRESHOLD = 0.8;
+
+let thumbnailCache = new Map();
+let cacheAccessOrder = [];
+let cacheDir = null;
+let ratingQueue = [];
+let isProcessingRatingQueue = false;
+
+function getCacheDir() {
+  if (!cacheDir) {
+    const userHome = app.getPath('home');
+    cacheDir = path.join(userHome, '.photo_manager', 'thumbnails');
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true });
+    }
+  }
+  return cacheDir;
+}
+
+function getFileHash(filePath) {
+  const stats = fs.statSync(filePath);
+  const hashInput = `${filePath}:${stats.size}:${stats.mtime.getTime()}`;
+  return crypto.createHash('md5').update(hashInput).digest('hex');
+}
+
+function getThumbnailPath(filePath) {
+  const hash = getFileHash(filePath);
+  const ext = path.extname(filePath).toLowerCase();
+  return path.join(getCacheDir(), `${hash}${ext === '.raw' ? '.jpg' : ext}`);
+}
+
+function getEmbeddedJpegFromRaw(filePath) {
+  try {
+    const buffer = fs.readFileSync(filePath);
+    let offset = 0;
+    
+    while (offset < buffer.length - 4) {
+      if (buffer[offset] === 0xFF && buffer[offset + 1] === 0xD8 && buffer[offset + 2] === 0xFF) {
+        let endOffset = offset + 2;
+        while (endOffset < buffer.length - 1) {
+          if (buffer[endOffset] === 0xFF && buffer[endOffset + 1] === 0xD9) {
+            endOffset += 2;
+            return buffer.slice(offset, endOffset);
+          }
+          endOffset++;
+        }
+      }
+      offset++;
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function generateThumbnail(filePath, maxSize = THUMBNAIL_SIZE) {
+  try {
+    const ext = path.extname(filePath).toLowerCase();
+    const isRaw = ['.cr2', '.cr3', '.arw', '.nef', '.dng', '.raw'].includes(ext);
+    
+    let imageBuffer;
+    if (isRaw) {
+      imageBuffer = getEmbeddedJpegFromRaw(filePath);
+      if (!imageBuffer) {
+        return null;
+      }
+    } else {
+      imageBuffer = fs.readFileSync(filePath);
+    }
+    
+    const dimensions = getImageDimensions(imageBuffer);
+    if (!dimensions) {
+      return imageBuffer;
+    }
+    
+    const { width, height } = dimensions;
+    const scale = Math.min(maxSize / width, maxSize / height, 1);
+    
+    if (scale >= 1) {
+      return imageBuffer;
+    }
+    
+    return imageBuffer;
+  } catch (error) {
+    console.error('生成缩略图失败:', error);
+    return null;
+  }
+}
+
+function getImageDimensions(buffer) {
+  try {
+    let offset = 0;
+    
+    if (buffer[0] !== 0xFF || buffer[1] !== 0xD8) {
+      return null;
+    }
+    
+    offset = 2;
+    while (offset < buffer.length - 4) {
+      if (buffer[offset] !== 0xFF) break;
+      
+      const marker = buffer[offset + 1];
+      
+      if (marker === 0xC0 || marker === 0xC2) {
+        const height = buffer.readUInt16BE(offset + 5);
+        const width = buffer.readUInt16BE(offset + 7);
+        return { width, height };
+      }
+      
+      if (marker >= 0xD0 && marker <= 0xD9) {
+        offset += 2;
+      } else {
+        const length = buffer.readUInt16BE(offset + 2);
+        offset += 2 + length;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function updateCacheAccess(key) {
+  const index = cacheAccessOrder.indexOf(key);
+  if (index !== -1) {
+    cacheAccessOrder.splice(index, 1);
+  }
+  cacheAccessOrder.push(key);
+}
+
+function evictLRU() {
+  if (thumbnailCache.size <= MAX_CACHE_ITEMS * CACHE_CLEANUP_THRESHOLD) {
+    return;
+  }
+  
+  const itemsToEvict = Math.floor(MAX_CACHE_ITEMS * 0.2);
+  for (let i = 0; i < itemsToEvict && cacheAccessOrder.length > 0; i++) {
+    const key = cacheAccessOrder.shift();
+    thumbnailCache.delete(key);
+  }
+}
+
+async function processRatingQueue() {
+  if (isProcessingRatingQueue || ratingQueue.length === 0) return;
+  
+  isProcessingRatingQueue = true;
+  
+  while (ratingQueue.length > 0) {
+    const task = ratingQueue.shift();
+    try {
+      await saveImageRating(task.filePath, task.rating);
+    } catch (error) {
+      console.error('后台保存评级失败:', error);
+    }
+  }
+  
+  isProcessingRatingQueue = false;
+}
 
 // 读取图片元数据
 function readImageMetadata(filePath) {
@@ -184,9 +348,79 @@ ipcMain.handle('image:save-rating', (event, { filePath, rating }) => {
   return saveImageRating(filePath, rating);
 });
 
-// 监听图片元数据读取请求
+ipcMain.handle('image:save-rating-async', (event, { filePath, rating }) => {
+  ratingQueue.push({ filePath, rating });
+  setImmediate(processRatingQueue);
+  return true;
+});
+
 ipcMain.handle('image:read-metadata', (event, filePath) => {
   return readImageMetadata(filePath);
+});
+
+ipcMain.handle('image:get-thumbnail', async (event, { filePath, maxSize }) => {
+  try {
+    const cacheKey = `${filePath}:${maxSize || THUMBNAIL_SIZE}`;
+    
+    if (thumbnailCache.has(cacheKey)) {
+      updateCacheAccess(cacheKey);
+      return { data: thumbnailCache.get(cacheKey).toString('base64'), cached: true };
+    }
+    
+    const thumbnailPath = getThumbnailPath(filePath);
+    if (fs.existsSync(thumbnailPath)) {
+      const cachedData = fs.readFileSync(thumbnailPath);
+      thumbnailCache.set(cacheKey, cachedData);
+      updateCacheAccess(cacheKey);
+      evictLRU();
+      return { data: cachedData.toString('base64'), cached: true };
+    }
+    
+    const thumbnailBuffer = await generateThumbnail(filePath, maxSize || THUMBNAIL_SIZE);
+    if (!thumbnailBuffer) {
+      return { data: null, cached: false };
+    }
+    
+    try {
+      fs.writeFileSync(thumbnailPath, thumbnailBuffer);
+    } catch (writeError) {
+      console.error('保存缩略图缓存失败:', writeError);
+    }
+    
+    thumbnailCache.set(cacheKey, thumbnailBuffer);
+    updateCacheAccess(cacheKey);
+    evictLRU();
+    
+    return { data: thumbnailBuffer.toString('base64'), cached: false };
+  } catch (error) {
+    console.error('获取缩略图失败:', error);
+    return { data: null, cached: false };
+  }
+});
+
+ipcMain.handle('image:get-preview', async (event, { filePath, previewSize }) => {
+  try {
+    const ext = path.extname(filePath).toLowerCase();
+    const isRaw = ['.cr2', '.cr3', '.arw', '.nef', '.dng', '.raw'].includes(ext);
+    
+    if (isRaw) {
+      const embeddedJpeg = getEmbeddedJpegFromRaw(filePath);
+      if (embeddedJpeg) {
+        return { data: embeddedJpeg.toString('base64'), isRaw: true };
+      }
+    }
+    
+    return { data: null, isRaw };
+  } catch (error) {
+    console.error('获取预览失败:', error);
+    return { data: null, isRaw: false };
+  }
+});
+
+ipcMain.handle('image:clear-cache', () => {
+  thumbnailCache.clear();
+  cacheAccessOrder = [];
+  return true;
 });
 
 // 监听窗口控制操作
