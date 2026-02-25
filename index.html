@@ -936,7 +936,7 @@
 
     /* 废片标记 - 评级栏背景变红 */
     .thumbnail-rating.rejected {
-      background: rgba(241, 69, 69, 0.49) !important;
+      background: rgba(224, 23, 23, 0.726) !important;
     }
 
     .thumbnail-rating.rejected .thumbnail-star {
@@ -2078,11 +2078,17 @@
         switch (e.key) {
           case 'ArrowLeft':
             e.preventDefault();
-            navigateImage(-1);
+            // 防止按住方向键时连续翻页
+            if (!e.repeat) {
+              navigateImage(-1);
+            }
             break;
           case 'ArrowRight':
             e.preventDefault();
-            navigateImage(1);
+            // 防止按住方向键时连续翻页
+            if (!e.repeat) {
+              navigateImage(1);
+            }
             break;
           case '1':
           case '2':
@@ -2424,6 +2430,9 @@
 
       // 更新复选框状态
       updateThumbnailCheckboxes();
+
+      // 更新当前选中的缩略图状态
+      updateThumbnailSelection(currentIndex);
 
       // 使用Intersection Observer实现懒加载
       setupLazyLoading();
@@ -3161,7 +3170,7 @@
 
       hideProgress();
       updateThumbnails(filteredGroups);
-      showMessage('完成', `已为 ${processed} 张图片设置评级`, 'info');
+      // showMessage('完成', `已为 ${processed} 张图片设置评级`, 'info');
     }
 
     // EXIF信息面板
@@ -3374,21 +3383,22 @@
       const itemWidth = itemRect.width;
       
       // 检查是否在可见区域内
-      const isVisible = itemLeft >= 0 && itemRight <= containerRect.width;
+      const isFullyVisible = itemLeft >= 0 && itemRight <= containerRect.width;
       
-      if (!isVisible) {
-        // 计算滚动位置，使缩略图居中显示
-        const scrollLeft = container.scrollLeft;
-        const itemOffsetLeft = thumbnailItem.offsetLeft;
-        const containerWidth = containerRect.width;
-        
-        // 计算目标滚动位置，使缩略图居中
-        const targetScroll = itemOffsetLeft - (containerWidth / 2) + (itemWidth / 2);
-        
-        // 平滑滚动
+      if (isFullyVisible) return;
+      
+      // 判断缩略图在左侧还是右侧
+      if (itemLeft < 0) {
+        // 缩略图在左侧，滚动到左侧对齐
         container.scrollTo({
-          left: Math.max(0, targetScroll),
-          behavior: 'smooth'
+          left: thumbnailItem.offsetLeft - 10,
+          behavior: 'instant'
+        });
+      } else if (itemRight > containerRect.width) {
+        // 缩略图在右侧，滚动到右侧对齐
+        container.scrollTo({
+          left: thumbnailItem.offsetLeft - containerRect.width + itemWidth + 10,
+          behavior: 'instant'
         });
       }
     }
