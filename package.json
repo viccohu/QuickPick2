@@ -1,0 +1,38 @@
+{
+  "name": "quickpick2",
+  "version": "1.0.0",
+  "description": "Windows桌面图片查看管理器",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [
+    "electron",
+    "image-viewer",
+    "photo-manager"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^29.4.6",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.quickpick2.app",
+    "productName": "QuickPick2",
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "dependencies": {
+    "exifreader": "^4.36.2",
+    "exiftool-vendored": "^35.10.1",
+    "remixicon": "^4.9.1"
+  }
+}

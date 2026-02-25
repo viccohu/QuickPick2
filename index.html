@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickPick2 - 图片查看管理器</title>
+  <link rel="stylesheet" href="./assets/remixicon.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      background: #0a0a0a;
+      overflow: hidden;
+    }
+
+    /* 标题栏 - 黑色主题 */
+    .title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 20px;
+      background: rgba(20, 20, 20, 0.98);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+      -webkit-app-region: drag;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .window-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .window-title i {
+      font-size: 16px;
+      color: #667eea;
+    }
+
+    /* 窗口控制按钮 - 黑色主题 */
+    .window-controls {
+      display: flex;
+      gap: 4px;
+      -webkit-app-region: no-drag;
+    }
+
+    .control-button {
+      width: 40px;
+      height: 28px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      background: transparent;
+      color: #888;
+    }
+
+    .control-button:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e0e0e0;
+    }
+
+    .control-button.close:hover {
+      background: #e81123;
+      color: white;
+    }
+
+    .control-button:active {
+      transform: scale(0.95);
+    }
+
+    /* 主容器 */
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      background: #0a0a0a;
+    }
+
+    /* 顶部路径管理模块 - 黑色主题 */
+    .path-container {
+      display: flex;
+      padding: 10px 20px;
+      background: rgba(18, 18, 18, 0.98);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      gap: 16px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .path-item {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .path-label {
+      font-weight: 600;
+      font-size: 12px;
+      white-space: nowrap;
+      color: #888;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .path-label i {
+      font-size: 14px;
+      color: #667eea;
+    }
+
+    .path-input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      font-size: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgba(30, 30, 30, 0.9);
+      color: #e0e0e0;
+    }
+
+    .path-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
+    }
+
+    .path-button {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+    }
+
+    .path-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+    }
+
+    .path-button:active {
+      transform: translateY(0);
+    }
+
+    /* 中间预览区域 - 黑色主题 */
+    .preview-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(180deg, #0d0d0d 0%, #1a1a1a 100%);
+      position: relative;
+      min-height: 200px;
+    }
+
+    .preview-wrapper {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 100%;
+      cursor: grab;
+      transition: transform 0.1s ease-out;
+    }
+
+    .preview-image:active {
+      cursor: grabbing;
+    }
+
+    /* 星级评级控件 - 黑色主题 */
+    .rating-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 6px 16px;
+      background: rgba(15, 15, 15, 0.95);
+      backdrop-filter: blur(20px);
+      color: white;
+      gap: 5px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .star {
+      font-size: 18px;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.15);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .star:hover {
+      color: #667eea;
+      transform: scale(1.1);
+    }
+
+    .star.active {
+      color: #667eea;
+      text-shadow: 0 0 10px rgba(102, 126, 234, 0.4);
+    }
+
+    /* 底部缩略图区域 - 黑色主题 */
+    .thumbnail-container {
+      height: 112px;
+      background: rgba(15, 15, 15, 0.98);
+      backdrop-filter: blur(20px);
+      padding: 12px 20px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .thumbnail-wrapper {
+      display: inline-flex;
+      gap: 4px;
+      align-items: flex-start;
+    }
+
+    .thumbnail-item {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      margin-right: 4px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: visible;
+      background: #2a2a2a;
+    }
+
+    .thumbnail-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .thumbnail-item.active {
+      border-color: #667eea;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+    }
+
+    .thumbnail-image-wrapper {
+      position: relative;
+      width: 120px;
+      height: 70px;
+      background: #2a2a2a;
+      border-radius: 4px 4px 0 0;
+      overflow: hidden;
+    }
+
+    .thumbnail-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .thumbnail-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+      border-radius: 4px 4px 0 0;
+      opacity: 0;
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    .thumbnail-item:hover .thumbnail-overlay {
+      opacity: 1;
+    }
+
+    .thumbnail-format {
+      position: absolute;
+      padding: 2px 4px;
+      border-radius: 2px;
+      font-size: 8px;
+      font-weight: 500;
+      background: rgba(40, 40, 40, 0.9);
+      color: #888;
+      z-index: 1;
+    }
+
+    .thumbnail-format.jpg {
+      top: 3px;
+      left: 3px;
+    }
+
+    .thumbnail-format.raw {
+      top: 3px;
+      right: 3px;
+    }
+
+    .thumbnail-rating {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1px;
+      padding: 3px 0;
+      background: #1a1a1a;
+      border-radius: 0 0 4px 4px;
+    }
+
+    .thumbnail-star {
+      font-size: 10px;
+      cursor: pointer;
+      color: #444;
+      transition: all 0.15s ease;
+    }
+
+    .thumbnail-star:hover {
+      color: #667eea;
+      transform: scale(1.1);
+    }
+
+    .thumbnail-star.active {
+      color: #667eea;
+    }
+
+    /* 操作栏 - 黑色主题 */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      background: rgba(18, 18, 18, 0.98);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      gap: 16px;
+      flex-shrink: 0;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .filter-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 4px;
+    }
+
+    .filter-btn {
+      width: 36px;
+      height: 32px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgba(255, 255, 255, 0.04);
+      color: #666;
+    }
+
+    .filter-btn:hover {
+      background: rgba(102, 126, 234, 0.15);
+      color: #667eea;
+    }
+
+    .filter-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 2px 6px rgba(102, 126, 234, 0.25);
+    }
+
+    .filter-select {
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      font-size: 13px;
+      background: rgba(30, 30, 30, 0.9);
+      color: #e0e0e0;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
+    }
+
+    .filter-stars {
+      display: none;
+      gap: 4px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .filter-stars.visible {
+      display: flex;
+    }
+
+    .filter-star {
+      font-size: 18px;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.15);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .filter-star:hover {
+      color: #667eea;
+      transform: scale(1.2);
+    }
+
+    .filter-star.active {
+      color: #667eea;
+      text-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .filter-status {
+      margin-left: 12px;
+      font-size: 13px;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .export-button {
+      margin-left: auto;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+    }
+
+    .export-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+    }
+
+    .export-button:active {
+      transform: translateY(0);
+    }
+
+    /* 无图片提示 - 黑色主题 */
+    .no-image {
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .no-image i {
+      font-size: 48px;
+      opacity: 0.2;
+    }
+
+    /* 滚动条样式 - 黑色主题 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* 加载动画 */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .thumbnail-item {
+      animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 标题栏 -->
+    <div class="title-bar">
+      <div class="window-title">
+        <i class="ri-image-line"></i>
+        QuickPick - 图片查看管理器
+      </div>
+      <div class="window-controls">
+        <button class="control-button minimize"><i class="ri-subtract-line"></i></button>
+        <button class="control-button maximize"><i class="ri-checkbox-blank-line"></i></button>
+        <button class="control-button close"><i class="ri-close-line"></i></button>
+      </div>
+    </div>
+    <!-- 顶部路径管理模块 -->
+    <div class="path-container">
+      <div class="path-item">
+        <span class="path-label"><i class="ri-image-2-line"></i>JPG路径</span>
+        <input type="text" class="path-input" id="jpgPath" placeholder="请输入JPG文件路径">
+        <button class="path-button" id="jpgBrowse"><i class="ri-folder-open-line"></i>浏览</button>
+      </div>
+      <div class="path-item">
+        <span class="path-label"><i class="ri-camera-line"></i>RAW路径</span>
+        <input type="text" class="path-input" id="rawPath" placeholder="请输入RAW文件路径">
+        <button class="path-button" id="rawBrowse"><i class="ri-folder-open-line"></i>浏览</button>
+      </div>
+      <button class="path-button" id="loadButton" style="white-space: nowrap;"><i class="ri-refresh-line"></i>加载图片</button>
+    </div>
+
+    <!-- 中间预览区域 -->
+    <div class="preview-container">
+      <div class="preview-wrapper" id="previewWrapper">
+        <div class="no-image" id="noImage">
+          <i class="ri-image-add-line"></i>
+          <span></span>
+        </div>
+      </div>
+      <div class="rating-container">
+        <span class="star" data-rating="1"><i class="ri-star-fill"></i></span>
+        <span class="star" data-rating="2"><i class="ri-star-fill"></i></span>
+        <span class="star" data-rating="3"><i class="ri-star-fill"></i></span>
+        <span class="star" data-rating="4"><i class="ri-star-fill"></i></span>
+        <span class="star" data-rating="5"><i class="ri-star-fill"></i></span>
+      </div>
+    </div>
+
+    <!-- 底部缩略图区域 -->
+    <div class="thumbnail-container" id="thumbnailContainer">
+      <div class="thumbnail-wrapper" id="thumbnailWrapper">
+        <!-- 缩略图将通过JS动态生成 -->
+      </div>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="toolbar">
+      <div class="filter-container">
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-filter="all" title="全部">
+            <i class="ri-apps-line"></i>
+          </button>
+          <button class="filter-btn" data-filter="any" title="有星">
+            <i class="ri-star-fill"></i>
+          </button>
+          <button class="filter-btn" data-filter="none" title="无星">
+            <i class="ri-star-line"></i>
+          </button>
+          <button class="filter-btn" data-filter="equal" title="等于">
+            <i class="ri-equal-line"></i>
+          </button>
+          <button class="filter-btn" data-filter="greater" title="大于等于">
+            <i class="ri-arrow-up-circle-line"></i>
+          </button>
+          <button class="filter-btn" data-filter="less" title="小于等于">
+            <i class="ri-arrow-down-circle-line"></i>
+          </button>
+        </div>
+        <div class="filter-stars" id="filterStars">
+          <span class="filter-star" data-rating="1"><i class="ri-star-fill"></i></span>
+          <span class="filter-star" data-rating="2"><i class="ri-star-fill"></i></span>
+          <span class="filter-star" data-rating="3"><i class="ri-star-fill"></i></span>
+          <span class="filter-star" data-rating="4"><i class="ri-star-fill"></i></span>
+          <span class="filter-star" data-rating="5"><i class="ri-star-fill"></i></span>
+        </div>
+        <span class="filter-status" id="filterStatus">未筛选</span>
+      </div>
+      <button class="export-button" id="exportButton"><i class="ri-download-2-line"></i>导出文件</button>
+    </div>
+  </div>
+
+  <script>
+    // 全局变量
+    let jpgPath = '';
+    let rawPath = '';
+    let imageGroups = [];
+    let filteredGroups = [];
+    let currentIndex = 0;
+    let ratingsData = {};
+    let filterCondition = 'all';
+    let filterRating = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let mouseOffsetX = 0; // 鼠标在图片上的相对X偏移
+    let mouseOffsetY = 0; // 鼠标在图片上的相对Y偏移
+    let currentScale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      initEventListeners();
+      loadRatingsData();
+    });
+
+    // 初始化事件监听器
+    function initEventListeners() {
+      // 恢复文本选择功能
+      document.body.style.userSelect = 'auto';
+      document.body.style.webkitUserSelect = 'auto';
+      document.body.style.msUserSelect = 'auto';
+      
+      // 窗口控制按钮
+      document.querySelector('.control-button.minimize').addEventListener('click', () => {
+        window.electronAPI.window.minimize();
+      });
+      
+      document.querySelector('.control-button.maximize').addEventListener('click', () => {
+        window.electronAPI.window.maximize();
+      });
+      
+      document.querySelector('.control-button.close').addEventListener('click', () => {
+        window.electronAPI.window.close();
+      });
+      
+      // 路径管理
+      document.getElementById('jpgBrowse').addEventListener('click', () => browseDirectory('jpg'));
+      document.getElementById('rawBrowse').addEventListener('click', () => browseDirectory('raw'));
+      document.getElementById('loadButton').addEventListener('click', loadImages);
+      document.getElementById('jpgPath').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loadImages();
+      });
+      document.getElementById('rawPath').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loadImages();
+      });
+
+      // 星级评级
+      document.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('click', () => {
+          const rating = parseInt(star.dataset.rating);
+          setRating(rating);
+        });
+      });
+
+      // 筛选
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const filter = btn.dataset.filter;
+          setFilterCondition(filter);
+        });
+      });
+      document.querySelectorAll('.filter-star').forEach(star => {
+        star.addEventListener('click', () => {
+          const rating = parseInt(star.dataset.rating);
+          setFilterRating(rating);
+        });
+      });
+
+      // 导出
+      document.getElementById('exportButton').addEventListener('click', exportFiles);
+
+      // 键盘导航
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') navigateImage(-1);
+        if (e.key === 'ArrowRight') navigateImage(1);
+      });
+
+      // 鼠标滚轮缩放
+      document.getElementById('previewWrapper').addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        scaleImage(delta, e.clientX, e.clientY);
+      });
+
+      // 拖拽移动 - 使用左键拖拽，同时禁用文本选择
+      const previewWrapper = document.getElementById('previewWrapper');
+      
+      // 监听鼠标按下事件，响应左键
+      previewWrapper.addEventListener('mousedown', (e) => {
+        // 检查是否是左键
+        if (e.button === 0 && e.target.classList.contains('preview-image')) {
+          // 禁用文本选择
+          e.preventDefault();
+          startDrag(e);
+        }
+      });
+      
+      // 监听鼠标移动事件
+      document.addEventListener('mousemove', (e) => {
+        // 如果正在拖拽，禁用文本选择
+        if (isDragging) {
+          e.preventDefault();
+        }
+        drag(e);
+      });
+      
+      // 监听鼠标释放事件
+      document.addEventListener('mouseup', (e) => {
+        // 检查是否是左键
+        if (e.button === 0) {
+          endDrag();
+        }
+      });
+      
+      // 添加鼠标移出窗口时的处理，确保拖拽状态能够正确结束
+      document.addEventListener('mouseleave', endDrag);
+      previewWrapper.addEventListener('mouseleave', endDrag);
+      
+      // 缩略图横向滚动功能
+      const thumbnailContainer = document.getElementById('thumbnailContainer');
+      thumbnailContainer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        thumbnailContainer.scrollLeft += e.deltaY;
+      }, { passive: false });
+    }
+
+    // 浏览目录
+    async function browseDirectory(type) {
+      try {
+        const path = await window.electronAPI.openDirectoryDialog({});
+        if (path) {
+          document.getElementById(`${type}Path`).value = path;
+          // 自动加载图片
+          loadImages();
+        }
+      } catch (error) {
+        console.error('浏览目录失败:', error);
+      }
+    }
+
+    // 加载图片
+    async function loadImages() {
+      try {
+        // 获取路径
+        const jpgInput = document.getElementById('jpgPath').value;
+        const rawInput = document.getElementById('rawPath').value;
+
+        // 验证路径
+        if (jpgInput) {
+          const jpgExists = await window.electronAPI.fs.existsSync(jpgInput);
+          if (!jpgExists) {
+            showMessage('错误', 'JPG路径不存在', 'error');
+            return;
+          }
+          jpgPath = jpgInput;
+        }
+
+        if (rawInput) {
+          const rawExists = await window.electronAPI.fs.existsSync(rawInput);
+          if (!rawExists) {
+            showMessage('错误', 'RAW路径不存在', 'error');
+            return;
+          }
+          rawPath = rawInput;
+        }
+
+        // 扫描文件
+        await scanFiles();
+      } catch (error) {
+        console.error('加载图片失败:', error);
+        showMessage('错误', '操作失败', 'error');
+      }
+    }
+
+    // 扫描文件
+    async function scanFiles() {
+      try {
+        const jpgFiles = [];
+        const rawFiles = [];
+
+        // 扫描JPG文件
+        if (jpgPath) {
+          const files = await window.electronAPI.fs.readdir(jpgPath);
+          jpgFiles.push(...files.filter(file => {
+            const ext = file.toLowerCase();
+            return ext.endsWith('.jpg') || ext.endsWith('.jpeg');
+          }).map(file => ({ path: `${jpgPath}\\${file}`, name: file, type: 'jpg' })));
+        }
+
+        // 扫描RAW文件
+        if (rawPath) {
+          const files = await window.electronAPI.fs.readdir(rawPath);
+          rawFiles.push(...files.filter(file => {
+            const ext = file.toLowerCase();
+            return ext.endsWith('.cr2') || ext.endsWith('.cr3') || ext.endsWith('.arw') || 
+                   ext.endsWith('.nef') || ext.endsWith('.dng');
+          }).map(file => ({ path: `${rawPath}\\${file}`, name: file, type: 'raw' })));
+        }
+
+        // 生成图片组
+        generateImageGroups(jpgFiles, rawFiles);
+
+        // 加载星级数据
+        await loadRatingsData();
+
+        // 应用筛选
+        applyFilter();
+
+        // 显示第一张图片
+        if (filteredGroups.length > 0) {
+          showImage(0);
+        } else {
+          showNoImage();
+        }
+      } catch (error) {
+        console.error('扫描文件失败:', error);
+        showMessage('错误', '扫描文件失败', 'error');
+      }
+    }
+
+    // 生成图片组
+    function generateImageGroups(jpgFiles, rawFiles) {
+      const groups = {};
+
+      // 添加JPG文件
+      jpgFiles.forEach(file => {
+        const prefix = getFilePrefix(file.name);
+        if (!groups[prefix]) {
+          groups[prefix] = { jpg: null, raw: null };
+        }
+        groups[prefix].jpg = file;
+      });
+
+      // 添加RAW文件
+      rawFiles.forEach(file => {
+        const prefix = getFilePrefix(file.name);
+        if (!groups[prefix]) {
+          groups[prefix] = { jpg: null, raw: null };
+        }
+        groups[prefix].raw = file;
+      });
+
+      // 转换为数组并排序
+      imageGroups = Object.values(groups).filter(group => group.jpg || group.raw);
+      imageGroups.sort((a, b) => {
+        const nameA = (a.jpg || a.raw).name;
+        const nameB = (b.jpg || b.raw).name;
+        return nameA.localeCompare(nameB);
+      });
+    }
+
+    // 获取文件前缀
+    function getFilePrefix(filename) {
+      return filename.replace(/\.[^/.]+$/, '');
+    }
+
+    // 应用筛选
+    function applyFilter() {
+      filteredGroups = imageGroups.filter(group => {
+        // 获取组的星级（使用JPG文件的星级，如果没有则使用RAW文件的）
+        const file = group.jpg || group.raw;
+        const fileName = file.name;
+        const rating = ratingsData[fileName]?.rating || 0;
+
+        switch (filterCondition) {
+          case 'all':
+            return true;
+          case 'equal':
+            return rating === filterRating;
+          case 'greater':
+            return rating >= filterRating;
+          case 'less':
+            return rating <= filterRating;
+          case 'none':
+            return rating === 0;
+          case 'any':
+            return rating > 0;
+          default:
+            return true;
+        }
+      });
+
+      // 更新缩略图
+      updateThumbnails(filteredGroups);
+
+      // 更新筛选状态
+      updateFilterStatus();
+
+      // 显示第一张图片
+      if (filteredGroups.length > 0) {
+        showImage(0);
+      } else {
+        showNoImage();
+      }
+    }
+
+    // 更新缩略图 - 使用虚拟滚动和懒加载优化
+    function updateThumbnails(groups) {
+      const wrapper = document.getElementById('thumbnailWrapper');
+      wrapper.innerHTML = '';
+
+      // 使用DocumentFragment批量添加DOM元素
+      const fragment = document.createDocumentFragment();
+
+      groups.forEach((group, index) => {
+        // 优先使用JPG作为缩略图
+        const thumbnailFile = group.jpg || group.raw;
+        if (!thumbnailFile) return;
+
+        const fileName = thumbnailFile.name;
+        const rating = ratingsData[fileName]?.rating || 0;
+        
+        // 生成可交互的星级（底部，统一展示）
+        let ratingStars = '';
+        for (let i = 1; i <= 5; i++) {
+          const isActive = i <= rating ? 'active' : '';
+          ratingStars += `<span class="thumbnail-star ${isActive}" data-rating="${i}" data-index="${index}"><i class="ri-star-fill"></i></span>`;
+        }
+
+        const thumbnailItem = document.createElement('div');
+        thumbnailItem.className = 'thumbnail-item';
+        thumbnailItem.dataset.index = index;
+
+        // 生成格式标签
+        let formatLabels = '';
+        if (group.jpg && group.raw) {
+          formatLabels = `
+            <div class="thumbnail-format jpg">JPG</div>
+            <div class="thumbnail-format raw">RAW</div>
+          `;
+        } else {
+          formatLabels = `
+            <div class="thumbnail-format ${thumbnailFile.type}">${thumbnailFile.type.toUpperCase()}</div>
+          `;
+        }
+
+        // 使用data-src实现懒加载
+        thumbnailItem.innerHTML = `
+          <div class="thumbnail-image-wrapper">
+            <img class="thumbnail-image lazy" data-src="${thumbnailFile.path}" alt="${thumbnailFile.name}" loading="lazy">
+            <div class="thumbnail-overlay"></div>
+            ${formatLabels}
+          </div>
+          <div class="thumbnail-rating">${ratingStars}</div>
+        `;
+
+        // 使用事件委托处理点击
+        thumbnailItem.addEventListener('click', handleThumbnailClick);
+
+        fragment.appendChild(thumbnailItem);
+      });
+
+      wrapper.appendChild(fragment);
+
+      // 使用Intersection Observer实现懒加载
+      setupLazyLoading();
+    }
+
+    // 缩略图点击事件处理
+    function handleThumbnailClick(e) {
+      const thumbnailItem = e.currentTarget;
+      const index = parseInt(thumbnailItem.dataset.index);
+      
+      // 如果点击的是星级，不切换图片
+      if (e.target.closest('.thumbnail-star')) {
+        const star = e.target.closest('.thumbnail-star');
+        const starRating = parseInt(star.dataset.rating);
+        setThumbnailRating(index, starRating);
+      } else {
+        showImage(index);
+      }
+    }
+
+    // 设置懒加载
+    function setupLazyLoading() {
+      const lazyImages = document.querySelectorAll('.thumbnail-image.lazy');
+      
+      if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const img = entry.target;
+              img.src = img.dataset.src;
+              img.classList.remove('lazy');
+              observer.unobserve(img);
+            }
+          });
+        }, {
+          rootMargin: '100px',
+          threshold: 0.01
+        });
+
+        lazyImages.forEach(img => {
+          imageObserver.observe(img);
+        });
+      } else {
+        // 降级处理：直接加载所有图片
+        lazyImages.forEach(img => {
+          img.src = img.dataset.src;
+          img.classList.remove('lazy');
+        });
+      }
+    }
+
+    // 设置缩略图评级
+    async function setThumbnailRating(index, rating) {
+      const group = filteredGroups[index];
+      if (!group) return;
+
+      // 为JPG和RAW文件都设置星级
+      if (group.jpg) {
+        updateRating(group.jpg.path, rating);
+        await window.electronAPI.image.saveRating(group.jpg.path, ratingsData[group.jpg.name].rating);
+      }
+      if (group.raw) {
+        updateRating(group.raw.path, rating);
+        await window.electronAPI.image.saveRating(group.raw.path, ratingsData[group.raw.name].rating);
+      }
+
+      // 获取实际的评级值（可能被updateRating修改，如点击相同星级会取消）
+      const actualRating = ratingsData[group.jpg?.name || group.raw?.name]?.rating || 0;
+
+      // 只更新当前缩略图的星级显示，避免闪烁
+      const thumbnailItem = document.querySelector(`.thumbnail-item[data-index="${index}"]`);
+      if (thumbnailItem) {
+        const stars = thumbnailItem.querySelectorAll('.thumbnail-star');
+        stars.forEach(star => {
+          const starRating = parseInt(star.dataset.rating);
+          star.classList.toggle('active', starRating <= actualRating);
+        });
+      }
+      
+      // 如果当前显示的是这张图片，更新预览区的星级显示
+      if (currentIndex === index) {
+        updateRatingDisplay(group.jpg?.path || group.raw?.path);
+      }
+    }
+
+    // 显示图片
+    function showImage(index) {
+      if (index < 0 || index >= filteredGroups.length) return;
+
+      currentIndex = index;
+      const group = filteredGroups[index];
+
+      // 优先显示JPG文件，没有则显示RAW文件
+      const displayFile = group.jpg || group.raw;
+      if (!displayFile) return;
+
+      const previewWrapper = document.getElementById('previewWrapper');
+      previewWrapper.innerHTML = '';
+
+      const img = document.createElement('img');
+      img.className = 'preview-image';
+      img.src = displayFile.path;
+      img.alt = displayFile.name;
+
+      // 重置缩放和偏移
+      currentScale = 1;
+      offsetX = 0;
+      offsetY = 0;
+      updateImageTransform(img);
+
+      previewWrapper.appendChild(img);
+
+      // 更新星级显示
+      updateRatingDisplay(displayFile.path);
+
+      // 更新缩略图选中状态
+      updateThumbnailSelection(index);
+    }
+
+    // 显示无图片提示
+    function showNoImage() {
+      const previewWrapper = document.getElementById('previewWrapper');
+      previewWrapper.innerHTML = '<div class="no-image">无图片可显示</div>';
+      updateRatingDisplay(null);
+    }
+
+    // 更新图片变换
+    function updateImageTransform(img) {
+      if (!img) return;
+      img.style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
+    }
+
+    // 限制图片在视窗内
+    function constrainImagePosition() {
+      const img = document.querySelector('.preview-image');
+      if (!img) return;
+
+      const wrapper = document.getElementById('previewWrapper');
+      const wrapperRect = wrapper.getBoundingClientRect();
+      
+      // 获取图片的自然尺寸
+      const imgNaturalWidth = img.naturalWidth;
+      const imgNaturalHeight = img.naturalHeight;
+      
+      // 计算缩放后的图片尺寸
+      const imgWidth = imgNaturalWidth * currentScale;
+      const imgHeight = imgNaturalHeight * currentScale;
+
+      // 限制水平位置 - previewWrapper的边界就是图片拖动的边界
+      if (imgWidth > wrapperRect.width) {
+        const maxOffsetX = (imgWidth - wrapperRect.width) / 2;
+        offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, offsetX));
+      } else {
+        // 图片宽度小于等于预览区宽度时，居中显示
+        offsetX = 0;
+      }
+
+      // 限制垂直位置 - previewWrapper的边界就是图片拖动的边界
+      if (imgHeight > wrapperRect.height) {
+        const maxOffsetY = (imgHeight - wrapperRect.height) / 2;
+        offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, offsetY));
+      } else {
+        // 图片高度小于等于预览区高度时，居中显示
+        offsetY = 0;
+      }
+
+      updateImageTransform(img);
+    }
+
+    // 缩放图片
+    function scaleImage(factor, x, y) {
+      const newScale = Math.max(1, currentScale * factor); // 最小缩放到初始大小（100%）
+      currentScale = newScale;
+      
+      // 缩放时图片始终居中
+      offsetX = 0;
+      offsetY = 0;
+      
+      const img = document.querySelector('.preview-image');
+      if (img) {
+        updateImageTransform(img);
+        // 限制图片在视窗内
+        setTimeout(constrainImagePosition, 10);
+      }
+    }
+
+    // 开始拖拽
+    function startDrag(e) {
+      // 禁用浏览器默认行为
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (e.target.classList.contains('preview-image')) {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        // 计算鼠标在图片上的相对位置
+        const img = e.target;
+        const imgRect = img.getBoundingClientRect();
+        const wrapper = document.getElementById('previewWrapper');
+        const wrapperRect = wrapper.getBoundingClientRect();
+        
+        // 计算图片的实际位置（考虑缩放和偏移）
+        const imgNaturalWidth = img.naturalWidth;
+        const imgNaturalHeight = img.naturalHeight;
+        const imgWidth = imgNaturalWidth * currentScale;
+        const imgHeight = imgNaturalHeight * currentScale;
+        
+        // 计算图片在预览区中的实际位置
+        const imgLeft = wrapperRect.left + (wrapperRect.width - imgWidth) / 2 + offsetX * currentScale;
+        const imgTop = wrapperRect.top + (wrapperRect.height - imgHeight) / 2 + offsetY * currentScale;
+        
+        // 计算鼠标在图片上的相对位置（相对于图片左上角）
+        mouseOffsetX = e.clientX - imgLeft;
+        mouseOffsetY = e.clientY - imgTop;
+      }
+    }
+
+    // 拖拽中
+    function drag(e) {
+      if (!isDragging) return;
+      // 禁用浏览器默认行为
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const img = document.querySelector('.preview-image');
+      if (!img) return;
+      
+      const wrapper = document.getElementById('previewWrapper');
+      const wrapperRect = wrapper.getBoundingClientRect();
+      
+      // 获取图片的自然尺寸
+      const imgNaturalWidth = img.naturalWidth;
+      const imgNaturalHeight = img.naturalHeight;
+      
+      // 计算缩放后的图片尺寸
+      const imgWidth = imgNaturalWidth * currentScale;
+      const imgHeight = imgNaturalHeight * currentScale;
+      
+      // 计算图片在预览区中的理想位置，使鼠标始终锁定在落点
+      // 目标：鼠标位置 = 图片左上角位置 + 鼠标在图片上的相对位置
+      const targetImgLeft = e.clientX - mouseOffsetX;
+      const targetImgTop = e.clientY - mouseOffsetY;
+      
+      // 计算图片在预览区中的理想偏移量
+      // 预览区中心位置
+      const wrapperCenterX = wrapperRect.left + wrapperRect.width / 2;
+      const wrapperCenterY = wrapperRect.top + wrapperRect.height / 2;
+      
+      // 图片中心位置
+      const imgCenterX = targetImgLeft + imgWidth / 2;
+      const imgCenterY = targetImgTop + imgHeight / 2;
+      
+      // 计算偏移量（相对于预览区中心）
+      const newOffsetX = (imgCenterX - wrapperCenterX) / currentScale;
+      const newOffsetY = (imgCenterY - wrapperCenterY) / currentScale;
+      
+      // Windows 11照片浏览器风格的拖拽逻辑
+      // 如果图片宽度没有超出视窗宽度，则不允许水平拖拽
+      let constrainedOffsetX = offsetX;
+      if (imgWidth > wrapperRect.width) {
+        const maxOffsetX = (imgWidth - wrapperRect.width) / 2;
+        constrainedOffsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, newOffsetX));
+      } else {
+        // 图片宽度没有超出，保持居中
+        constrainedOffsetX = 0;
+      }
+      
+      // 如果图片高度没有超出视窗高度，则不允许垂直拖拽
+      let constrainedOffsetY = offsetY;
+      if (imgHeight > wrapperRect.height) {
+        const maxOffsetY = (imgHeight - wrapperRect.height) / 2;
+        constrainedOffsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, newOffsetY));
+      } else {
+        // 图片高度没有超出，保持居中
+        constrainedOffsetY = 0;
+      }
+      
+      // 强制更新偏移量
+      offsetX = constrainedOffsetX;
+      offsetY = constrainedOffsetY;
+      
+      // 强制更新图片位置
+      img.style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
+    }
+
+    // 结束拖拽
+    function endDrag() {
+      isDragging = false;
+      // 拖拽结束后立即限制图片在视窗内
+      setTimeout(() => {
+        constrainImagePosition();
+      }, 0);
+    }
+
+    // 导航图片
+    function navigateImage(direction) {
+      const newIndex = currentIndex + direction;
+      if (newIndex >= 0 && newIndex < filteredGroups.length) {
+        showImage(newIndex);
+      }
+    }
+
+    // 更新星级显示
+    function updateRatingDisplay(filePath) {
+      const stars = document.querySelectorAll('.star');
+      const fileName = filePath ? filePath.split(/[/\\]/).pop() : '';
+      const rating = fileName ? (ratingsData[fileName]?.rating || 0) : 0;
+
+      stars.forEach(star => {
+        const starRating = parseInt(star.dataset.rating);
+        star.classList.toggle('active', starRating <= rating);
+      });
+    }
+
+    // 设置星级
+    async function setRating(rating) {
+      const group = filteredGroups[currentIndex];
+      if (!group) return;
+
+      // 为JPG和RAW文件都设置星级
+      if (group.jpg) {
+        updateRating(group.jpg.path, rating);
+        await window.electronAPI.image.saveRating(group.jpg.path, ratingsData[group.jpg.name].rating);
+      }
+      if (group.raw) {
+        updateRating(group.raw.path, rating);
+        await window.electronAPI.image.saveRating(group.raw.path, ratingsData[group.raw.name].rating);
+      }
+
+      // 更新预览区星级显示
+      updateRatingDisplay(group.jpg?.path || group.raw?.path);
+      
+      // 只更新当前缩略图的星级显示，避免闪烁
+      const thumbnailItem = document.querySelector(`.thumbnail-item[data-index="${currentIndex}"]`);
+      if (thumbnailItem) {
+        const actualRating = ratingsData[group.jpg?.name || group.raw?.name]?.rating || 0;
+        const stars = thumbnailItem.querySelectorAll('.thumbnail-star');
+        stars.forEach(star => {
+          const starRating = parseInt(star.dataset.rating);
+          star.classList.toggle('active', starRating <= actualRating);
+        });
+      }
+    }
+
+    // 更新星级数据
+    function updateRating(filePath, rating) {
+      // 使用文件名作为键
+      const fileName = filePath.split(/[/\\]/).pop();
+      if (!ratingsData[fileName]) {
+        ratingsData[fileName] = { rating: 0, tags: [] };
+      }
+
+      // 如果点击的是当前星级，则取消评级
+      if (ratingsData[fileName].rating === rating) {
+        ratingsData[fileName].rating = 0;
+      } else {
+        ratingsData[fileName].rating = rating;
+      }
+    }
+
+    // 更新缩略图选中状态
+    function updateThumbnailSelection(index) {
+      document.querySelectorAll('.thumbnail-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      const activeItem = document.querySelector(`.thumbnail-item[data-index="${index}"]`);
+      if (activeItem) {
+        activeItem.classList.add('active');
+      }
+    }
+
+    // 更新筛选状态
+    function updateFilterStatus() {
+      const statusElement = document.getElementById('filterStatus');
+      let statusText = '未筛选';
+
+      if (filterCondition !== 'all') {
+        switch (filterCondition) {
+          case 'equal':
+            statusText = `已筛选：=${filterRating}星`;
+            break;
+          case 'greater':
+            statusText = `已筛选：≥${filterRating}星`;
+            break;
+          case 'less':
+            statusText = `已筛选：≤${filterRating}星`;
+            break;
+          case 'none':
+            statusText = '已筛选：无星';
+            break;
+          case 'any':
+            statusText = '已筛选：有星';
+            break;
+        }
+      }
+
+      statusElement.textContent = statusText;
+    }
+
+    // 设置筛选条件
+    function setFilterCondition(filter) {
+      filterCondition = filter;
+      
+      // 更新按钮状态
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+      });
+      
+      // 控制星级筛选区域的显示
+      const filterStars = document.getElementById('filterStars');
+      const needStars = ['equal', 'greater', 'less'].includes(filter);
+      filterStars.classList.toggle('visible', needStars);
+      
+      // 如果不需要星级筛选，重置星级
+      if (!needStars) {
+        filterRating = 0;
+        document.querySelectorAll('.filter-star').forEach(star => {
+          star.classList.remove('active');
+        });
+      }
+      
+      applyFilter();
+    }
+
+    // 设置筛选星级
+    function setFilterRating(rating) {
+      // 如果点击的是当前星级，则取消筛选
+      if (filterRating === rating) {
+        filterRating = 0;
+      } else {
+        filterRating = rating;
+      }
+
+      // 更新筛选星级显示，点亮逻辑与评分一致
+      document.querySelectorAll('.filter-star').forEach(star => {
+        const starRating = parseInt(star.dataset.rating);
+        star.classList.toggle('active', starRating <= filterRating);
+      });
+
+      applyFilter();
+    }
+
+    // 导出文件
+    async function exportFiles() {
+      try {
+        // 选择导出目录
+        const exportPath = await window.electronAPI.openDirectoryDialog({
+          title: '选择导出目录',
+          defaultPath: ''
+        });
+
+        if (!exportPath) return;
+
+        let jpgCount = 0;
+        let rawCount = 0;
+
+        // 遍历所有图片组
+        for (const group of imageGroups) {
+          // 获取组的星级
+          const file = group.jpg || group.raw;
+          const fileName = file.name;
+          const rating = ratingsData[fileName]?.rating || 0;
+
+          // 只导出有星级的文件
+          if (rating > 0) {
+            // 4星及以下：仅导出JPG
+            if (rating <= 4 && group.jpg) {
+              const targetPath = `${exportPath}\\JPG_Export\\${group.jpg.name}`;
+              await window.electronAPI.fs.copyFile(group.jpg.path, targetPath);
+              jpgCount++;
+            }
+            // 5星：导出JPG和RAW
+            else if (rating === 5) {
+              if (group.jpg) {
+                const targetPath = `${exportPath}\\JPG_Export\\${group.jpg.name}`;
+                await window.electronAPI.fs.copyFile(group.jpg.path, targetPath);
+                jpgCount++;
+              }
+              if (group.raw) {
+                const targetPath = `${exportPath}\\RAW_Export\\${group.raw.name}`;
+                await window.electronAPI.fs.copyFile(group.raw.path, targetPath);
+                rawCount++;
+              }
+            }
+          }
+        }
+
+        showMessage('导出完成', `导出完成：${jpgCount}个JPG文件，${rawCount}个RAW文件`, 'info');
+      } catch (error) {
+        console.error('导出文件失败:', error);
+        showMessage('错误', '导出文件失败', 'error');
+      }
+    }
+
+    // 加载星级数据 - 使用批量并发处理优化性能
+    async function loadRatingsData() {
+      try {
+        // 初始化ratingsData对象
+        ratingsData = {};
+        
+        // 批量并发读取评级数据，每批处理20个文件
+        const batchSize = 20;
+        const allFiles = [];
+        
+        // 收集所有需要读取评级的文件
+        for (const group of imageGroups) {
+          if (group.jpg) {
+            allFiles.push({ file: group.jpg, type: 'jpg' });
+          }
+          if (group.raw) {
+            allFiles.push({ file: group.raw, type: 'raw' });
+          }
+        }
+        
+        // 分批处理
+        for (let i = 0; i < allFiles.length; i += batchSize) {
+          const batch = allFiles.slice(i, i + batchSize);
+          
+          // 并发读取当前批次的评级
+          const ratings = await Promise.all(
+            batch.map(async ({ file }) => {
+              try {
+                const rating = await window.electronAPI.image.readRating(file.path);
+                return { fileName: file.name, rating };
+              } catch (error) {
+                console.error(`读取文件 ${file.name} 评级失败:`, error);
+                return { fileName: file.name, rating: 0 };
+              }
+            })
+          );
+          
+          // 存储评级数据
+          ratings.forEach(({ fileName, rating }) => {
+            ratingsData[fileName] = { rating, tags: [] };
+          });
+        }
+      } catch (error) {
+        console.error('加载星级数据失败:', error);
+        ratingsData = {};
+      }
+    }
+
+    // 保存星级数据
+    async function saveRatingsData() {
+      try {
+        // 遍历ratingsData，保存每个文件的评级
+        for (const group of imageGroups) {
+          if (group.jpg && ratingsData[group.jpg.name]) {
+            await window.electronAPI.image.saveRating(group.jpg.path, ratingsData[group.jpg.name].rating);
+          }
+          if (group.raw && ratingsData[group.raw.name]) {
+            await window.electronAPI.image.saveRating(group.raw.path, ratingsData[group.raw.name].rating);
+          }
+        }
+      } catch (error) {
+        console.error('保存星级数据失败:', error);
+      }
+    }
+
+    // 显示消息框
+    function showMessage(title, message, type) {
+      window.electronAPI.showMessageBox({
+        title: title,
+        message: message,
+        type: type
+      });
+    }
+
+    // 模拟fs模块（实际使用electronAPI）
+    const fs = {
+      existsSync: async (path) => {
+        return await window.electronAPI.fs.existsSync(path);
+      },
+      mkdirSync: async (path, options) => {
+        return await window.electronAPI.fs.mkdirSync(path, options);
+      },
+      readFileSync: (path, encoding) => {
+        // 实际应用中应该通过IPC获取文件内容
+        return '{}';
+      },
+      writeFileSync: (path, content, encoding) => {
+        // 实际应用中应该通过IPC写入文件内容
+      }
+    };
+  </script>
+</body>
+</html>
