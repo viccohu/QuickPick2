@@ -56,7 +56,7 @@
     .title-bar-stats {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       padding: 4px 10px;
       background: rgba(255, 255, 255, 0.04);
       border-radius: 4px;
@@ -68,6 +68,27 @@
       display: flex;
       align-items: center;
       gap: 2px;
+      padding: 2px 4px;
+      border-radius: 3px;
+      transition: all 0.15s;
+    }
+
+    .title-bar-stats-item.clickable {
+      cursor: pointer;
+    }
+
+    .title-bar-stats-item.clickable:hover {
+      background: rgba(102, 126, 234, 0.15);
+      color: #b8b8b8;
+    }
+
+    .title-bar-stats-item.clickable.active {
+      background: rgba(102, 126, 234, 0.25);
+      color: #667eea;
+    }
+
+    .title-bar-stats-item.clickable.active i {
+      color: #667eea;
     }
 
     .title-bar-stats-item i {
@@ -79,7 +100,7 @@
       width: 1px;
       height: 12px;
       background: rgba(255, 255, 255, 0.1);
-      margin: 0 4px;
+      margin: 0 2px;
     }
 
     .title-bar-help {
@@ -380,13 +401,37 @@
 
     .star.active,
     .star.hover-active {
-      color: #667eea;
-      text-shadow: 0 0 10px rgba(102, 126, 234, 0.4);
+      text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+    }
+
+    .star[data-rating="1"].active,
+    .star[data-rating="1"].hover-active {
+      color: #fef9c3;
+    }
+
+    .star[data-rating="2"].active,
+    .star[data-rating="2"].hover-active {
+      color: #fef3c7;
+    }
+
+    .star[data-rating="3"].active,
+    .star[data-rating="3"].hover-active {
+      color: #fde68a;
+    }
+
+    .star[data-rating="4"].active,
+    .star[data-rating="4"].hover-active {
+      color: #fcd34d;
+    }
+
+    .star[data-rating="5"].active,
+    .star[data-rating="5"].hover-active {
+      color: #fbbf24;
     }
 
     /* 底部缩略图区域 - 黑色主题 */
     .thumbnail-container {
-      height: 112px;
+      height: 122px;
       background: rgba(15, 15, 15, 0.98);
       backdrop-filter: blur(20px);
       padding: 12px 20px;
@@ -514,7 +559,32 @@
 
     .thumbnail-star.active,
     .thumbnail-star.hover-active {
-      color: #667eea;
+      text-shadow: 0 0 6px rgba(251, 191, 36, 0.4);
+    }
+
+    .thumbnail-star[data-rating="1"].active,
+    .thumbnail-star[data-rating="1"].hover-active {
+      color: #fef9c3;
+    }
+
+    .thumbnail-star[data-rating="2"].active,
+    .thumbnail-star[data-rating="2"].hover-active {
+      color: #fef3c7;
+    }
+
+    .thumbnail-star[data-rating="3"].active,
+    .thumbnail-star[data-rating="3"].hover-active {
+      color: #fde68a;
+    }
+
+    .thumbnail-star[data-rating="4"].active,
+    .thumbnail-star[data-rating="4"].hover-active {
+      color: #fcd34d;
+    }
+
+    .thumbnail-star[data-rating="5"].active,
+    .thumbnail-star[data-rating="5"].hover-active {
+      color: #fbbf24;
     }
 
     /* 操作栏 - 黑色主题 */
@@ -585,30 +655,78 @@
     }
 
     .filter-stars {
-      display: none;
-      gap: 4px;
+      display: flex;
+      gap: 8px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .filter-stars.visible {
-      display: flex;
-    }
-
     .filter-star {
-      font-size: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
       cursor: pointer;
       color: rgba(255, 255, 255, 0.15);
       transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 4px 6px;
+      border-radius: 4px;
     }
 
     .filter-star:hover {
-      transform: scale(1.2);
+      background: rgba(102, 126, 234, 0.1);
     }
 
-    .filter-star.active,
-    .filter-star.hover-active {
+    .filter-star:hover i {
+      transform: scale(1.15);
+    }
+
+    .filter-star.active {
+      background: rgba(102, 126, 234, 0.2);
+    }
+
+    .filter-star.active i,
+    .filter-star.hover-active i {
+      text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+    }
+
+    .filter-star i {
+      font-size: 16px;
+      transition: transform 0.15s;
+    }
+
+    .filter-star-count {
+      font-size: 10px;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .filter-star.active .filter-star-count {
       color: #667eea;
-      text-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .filter-star[data-rating="1"].active i,
+    .filter-star[data-rating="1"].hover-active i {
+      color: #fef9c3;
+    }
+
+    .filter-star[data-rating="2"].active i,
+    .filter-star[data-rating="2"].hover-active i {
+      color: #fef3c7;
+    }
+
+    .filter-star[data-rating="3"].active i,
+    .filter-star[data-rating="3"].hover-active i {
+      color: #fde68a;
+    }
+
+    .filter-star[data-rating="4"].active i,
+    .filter-star[data-rating="4"].hover-active i {
+      color: #fcd34d;
+    }
+
+    .filter-star[data-rating="5"].active i,
+    .filter-star[data-rating="5"].hover-active i {
+      color: #fbbf24;
     }
 
     .filter-status {
@@ -1431,12 +1549,6 @@
       background: rgba(18, 18, 26, 0.98);
     }
 
-    [data-theme="midnight"] .star.active,
-    [data-theme="midnight"] .filter-star.active,
-    [data-theme="midnight"] .thumbnail-star.active {
-      color: #6366f1;
-    }
-
     [data-theme="midnight"] .path-button,
     [data-theme="midnight"] .filter-btn.active,
     [data-theme="midnight"] .progress-bar {
@@ -1454,12 +1566,6 @@
     [data-theme="ocean"] .thumbnail-container,
     [data-theme="ocean"] .toolbar {
       background: rgba(16, 24, 32, 0.98);
-    }
-
-    [data-theme="ocean"] .star.active,
-    [data-theme="ocean"] .filter-star.active,
-    [data-theme="ocean"] .thumbnail-star.active {
-      color: #0ea5e9;
     }
 
     [data-theme="ocean"] .path-button,
@@ -1481,12 +1587,6 @@
       background: rgba(18, 26, 20, 0.98);
     }
 
-    [data-theme="forest"] .star.active,
-    [data-theme="forest"] .filter-star.active,
-    [data-theme="forest"] .thumbnail-star.active {
-      color: #22c55e;
-    }
-
     [data-theme="forest"] .path-button,
     [data-theme="forest"] .filter-btn.active,
     [data-theme="forest"] .progress-bar {
@@ -1504,12 +1604,6 @@
     [data-theme="sunset"] .thumbnail-container,
     [data-theme="sunset"] .toolbar {
       background: rgba(26, 18, 18, 0.98);
-    }
-
-    [data-theme="sunset"] .star.active,
-    [data-theme="sunset"] .filter-star.active,
-    [data-theme="sunset"] .thumbnail-star.active {
-      color: #f97316;
     }
 
     [data-theme="sunset"] .path-button,
@@ -1531,12 +1625,6 @@
       background: rgba(22, 16, 26, 0.98);
     }
 
-    [data-theme="purple"] .star.active,
-    [data-theme="purple"] .filter-star.active,
-    [data-theme="purple"] .thumbnail-star.active {
-      color: #a855f7;
-    }
-
     [data-theme="purple"] .path-button,
     [data-theme="purple"] .filter-btn.active,
     [data-theme="purple"] .header-progress-bar {
@@ -1554,13 +1642,13 @@
       </div>
       <div class="title-bar-center">
         <div class="title-bar-stats" id="titleBarStats">
-          <span class="title-bar-stats-item"><i class="ri-image-line"></i><span id="statsTotal">0</span></span>
+          <span class="title-bar-stats-item clickable" id="statsJpgOnly" title="仅JPG格式"><i class="ri-image-line"></i><span>0</span></span>
           <span class="title-bar-stats-divider"></span>
-          <span class="title-bar-stats-item" title="1星"><i class="ri-star-fill" style="color: #fef9c3;"></i><span id="stats1">0</span></span>
-          <span class="title-bar-stats-item" title="2星"><i class="ri-star-fill" style="color: #fef3c7;"></i><span id="stats2">0</span></span>
-          <span class="title-bar-stats-item" title="3星"><i class="ri-star-fill" style="color: #fde68a;"></i><span id="stats3">0</span></span>
-          <span class="title-bar-stats-item" title="4星"><i class="ri-star-fill" style="color: #fcd34d;"></i><span id="stats4">0</span></span>
-          <span class="title-bar-stats-item" title="5星"><i class="ri-star-fill" style="color: #fbbf24;"></i><span id="stats5">0</span></span>
+          <span class="title-bar-stats-item clickable" id="statsRawOnly" title="仅RAW格式"><i class="ri-file-unknow-line"></i><span>0</span></span>
+          <span class="title-bar-stats-divider"></span>
+          <span class="title-bar-stats-item clickable" id="statsBoth" title="双格式(JPG+RAW)"><i class="ri-file-copy-line"></i><span>0</span></span>
+          <span class="title-bar-stats-divider"></span>
+          <span class="title-bar-stats-item clickable active" id="statsTotal" title="总计"><i class="ri-gallery-line"></i><span>0</span></span>
         </div>
         <button class="title-bar-help" id="helpButton" title="快捷键帮助"><i class="ri-keyboard-line"></i></button>
       </div>
@@ -1644,11 +1732,11 @@
           </button>
         </div>
         <div class="filter-stars" id="filterStars">
-          <span class="filter-star" data-rating="1"><i class="ri-star-fill"></i></span>
-          <span class="filter-star" data-rating="2"><i class="ri-star-fill"></i></span>
-          <span class="filter-star" data-rating="3"><i class="ri-star-fill"></i></span>
-          <span class="filter-star" data-rating="4"><i class="ri-star-fill"></i></span>
-          <span class="filter-star" data-rating="5"><i class="ri-star-fill"></i></span>
+          <span class="filter-star" data-rating="1"><i class="ri-star-fill"></i><span class="filter-star-count" id="filterStar1">0</span></span>
+          <span class="filter-star" data-rating="2"><i class="ri-star-fill"></i><span class="filter-star-count" id="filterStar2">0</span></span>
+          <span class="filter-star" data-rating="3"><i class="ri-star-fill"></i><span class="filter-star-count" id="filterStar3">0</span></span>
+          <span class="filter-star" data-rating="4"><i class="ri-star-fill"></i><span class="filter-star-count" id="filterStar4">0</span></span>
+          <span class="filter-star" data-rating="5"><i class="ri-star-fill"></i><span class="filter-star-count" id="filterStar5">0</span></span>
         </div>
         <span class="filter-status" id="filterStatus">未筛选</span>
       </div>
@@ -1876,7 +1964,10 @@
     let ratingsData = {};
     let filterCondition = 'all';
     let filterRating = 0;
+    let formatFilter = 'all';
     let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
     let mouseOffsetX = 0;
     let mouseOffsetY = 0;
     let currentScale = 1;
@@ -2006,6 +2097,12 @@
       document.getElementById('rawPath').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') loadImages();
       });
+
+      // 格式筛选（标题栏统计点击）
+      document.getElementById('statsJpgOnly').addEventListener('click', () => setFormatFilter('jpg'));
+      document.getElementById('statsRawOnly').addEventListener('click', () => setFormatFilter('raw'));
+      document.getElementById('statsBoth').addEventListener('click', () => setFormatFilter('both'));
+      document.getElementById('statsTotal').addEventListener('click', () => setFormatFilter('all'));
 
       // 星级评级
       document.querySelectorAll('.star').forEach(star => {
@@ -2411,6 +2508,18 @@
     // 应用筛选
     function applyFilter() {
       filteredGroups = imageGroups.filter(group => {
+        // 格式筛选
+        if (formatFilter === 'jpg' && (group.raw || !group.jpg)) {
+          return false;
+        }
+        if (formatFilter === 'raw' && (group.jpg || !group.raw)) {
+          return false;
+        }
+        if (formatFilter === 'both' && (!group.jpg || !group.raw)) {
+          return false;
+        }
+
+        // 星级筛选
         const file = group.jpg || group.raw;
         const fileName = file.name;
         const rating = ratingsData[fileName]?.rating || 0;
@@ -2762,10 +2871,10 @@
     // 更新图片变换
     function updateImageTransform(img) {
       if (!img) return;
-      img.style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
+      img.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${currentScale})`;
     }
 
-    // 限制图片在视窗内
+    // 计算并约束图片位置
     function constrainImagePosition() {
       const img = document.querySelector('.preview-image');
       if (!img) return;
@@ -2773,29 +2882,20 @@
       const wrapper = document.getElementById('previewWrapper');
       const wrapperRect = wrapper.getBoundingClientRect();
       
-      // 获取图片的自然尺寸
-      const imgNaturalWidth = img.naturalWidth;
-      const imgNaturalHeight = img.naturalHeight;
-      
-      // 计算缩放后的图片尺寸
-      const imgWidth = imgNaturalWidth * currentScale;
-      const imgHeight = imgNaturalHeight * currentScale;
+      const imgWidth = img.naturalWidth * currentScale;
+      const imgHeight = img.naturalHeight * currentScale;
 
-      // 限制水平位置 - previewWrapper的边界就是图片拖动的边界
       if (imgWidth > wrapperRect.width) {
-        const maxOffsetX = (imgWidth - wrapperRect.width) / 2;
-        offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, offsetX));
+        const maxOffset = (imgWidth - wrapperRect.width) / 2;
+        offsetX = Math.max(-maxOffset, Math.min(maxOffset, offsetX));
       } else {
-        // 图片宽度小于等于预览区宽度时，居中显示
         offsetX = 0;
       }
 
-      // 限制垂直位置 - previewWrapper的边界就是图片拖动的边界
       if (imgHeight > wrapperRect.height) {
-        const maxOffsetY = (imgHeight - wrapperRect.height) / 2;
-        offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, offsetY));
+        const maxOffset = (imgHeight - wrapperRect.height) / 2;
+        offsetY = Math.max(-maxOffset, Math.min(maxOffset, offsetY));
       } else {
-        // 图片高度小于等于预览区高度时，居中显示
         offsetY = 0;
       }
 
@@ -2823,23 +2923,8 @@
       
       if (e.target.classList.contains('preview-image')) {
         isDragging = true;
-
-        const img = e.target;
-        const wrapper = document.getElementById('previewWrapper');
-        
-        cachedWrapperRect = wrapper.getBoundingClientRect();
-        cachedImgRect = img.getBoundingClientRect();
-        
-        const imgNaturalWidth = img.naturalWidth;
-        const imgNaturalHeight = img.naturalHeight;
-        const imgWidth = imgNaturalWidth * currentScale;
-        const imgHeight = imgNaturalHeight * currentScale;
-        
-        const imgLeft = cachedWrapperRect.left + (cachedWrapperRect.width - imgWidth) / 2 + offsetX * currentScale;
-        const imgTop = cachedWrapperRect.top + (cachedWrapperRect.height - imgHeight) / 2 + offsetY * currentScale;
-        
-        mouseOffsetX = e.clientX - imgLeft;
-        mouseOffsetY = e.clientY - imgTop;
+        dragStartX = e.clientX - offsetX;
+        dragStartY = e.clientY - offsetY;
       }
     }
 
@@ -2856,49 +2941,33 @@
         const img = document.querySelector('.preview-image');
         if (!img) return;
         
-        if (!cachedWrapperRect) {
-          const wrapper = document.getElementById('previewWrapper');
-          cachedWrapperRect = wrapper.getBoundingClientRect();
-        }
+        const wrapper = document.getElementById('previewWrapper');
+        const wrapperRect = wrapper.getBoundingClientRect();
         
-        const imgNaturalWidth = img.naturalWidth;
-        const imgNaturalHeight = img.naturalHeight;
+        const imgWidth = img.naturalWidth * currentScale;
+        const imgHeight = img.naturalHeight * currentScale;
         
-        const imgWidth = imgNaturalWidth * currentScale;
-        const imgHeight = imgNaturalHeight * currentScale;
+        let newOffsetX = e.clientX - dragStartX;
+        let newOffsetY = e.clientY - dragStartY;
         
-        const targetImgLeft = e.clientX - mouseOffsetX;
-        const targetImgTop = e.clientY - mouseOffsetY;
-        
-        const wrapperCenterX = cachedWrapperRect.left + cachedWrapperRect.width / 2;
-        const wrapperCenterY = cachedWrapperRect.top + cachedWrapperRect.height / 2;
-        
-        const imgCenterX = targetImgLeft + imgWidth / 2;
-        const imgCenterY = targetImgTop + imgHeight / 2;
-        
-        const newOffsetX = (imgCenterX - wrapperCenterX) / currentScale;
-        const newOffsetY = (imgCenterY - wrapperCenterY) / currentScale;
-        
-        let constrainedOffsetX = offsetX;
-        if (imgWidth > cachedWrapperRect.width) {
-          const maxOffsetX = (imgWidth - cachedWrapperRect.width) / 2;
-          constrainedOffsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, newOffsetX));
+        if (imgWidth > wrapperRect.width) {
+          const maxOffset = (imgWidth - wrapperRect.width) / 2;
+          newOffsetX = Math.max(-maxOffset, Math.min(maxOffset, newOffsetX));
         } else {
-          constrainedOffsetX = 0;
+          newOffsetX = 0;
         }
         
-        let constrainedOffsetY = offsetY;
-        if (imgHeight > cachedWrapperRect.height) {
-          const maxOffsetY = (imgHeight - cachedWrapperRect.height) / 2;
-          constrainedOffsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, newOffsetY));
+        if (imgHeight > wrapperRect.height) {
+          const maxOffset = (imgHeight - wrapperRect.height) / 2;
+          newOffsetY = Math.max(-maxOffset, Math.min(maxOffset, newOffsetY));
         } else {
-          constrainedOffsetY = 0;
+          newOffsetY = 0;
         }
         
-        offsetX = constrainedOffsetX;
-        offsetY = constrainedOffsetY;
+        offsetX = newOffsetX;
+        offsetY = newOffsetY;
         
-        img.style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
+        img.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${currentScale})`;
         
         rafId = null;
       });
@@ -2910,11 +2979,6 @@
         cancelAnimationFrame(rafId);
         rafId = null;
       }
-      cachedWrapperRect = null;
-      cachedImgRect = null;
-      setTimeout(() => {
-        constrainImagePosition();
-      }, 0);
     }
 
     function navigateImage(direction) {
@@ -3705,38 +3769,63 @@
         btn.classList.toggle('active', btn.dataset.filter === filter);
       });
       
-      // 控制星级筛选区域的显示
-      const filterStars = document.getElementById('filterStars');
+      // 如果筛选条件需要星级，使用已选中的星级
       const needStars = ['equal', 'greater', 'less'].includes(filter);
-      filterStars.classList.toggle('visible', needStars);
-      
-      // 如果不需要星级筛选，重置星级
-      if (!needStars) {
+      if (needStars && selectedFilterRating > 0) {
+        filterRating = selectedFilterRating;
+      } else if (!needStars) {
         filterRating = 0;
+        selectedFilterRating = 0;
         document.querySelectorAll('.filter-star').forEach(star => {
           star.classList.remove('active');
         });
       }
       
+      // 更新筛选状态提示
+      updateFilterStatusForRating();
+      
       applyFilter();
     }
 
-    // 设置筛选星级
+    // 设置筛选星级（只选中，不立即筛选）
+    let selectedFilterRating = 0;
+
     function setFilterRating(rating) {
-      // 如果点击的是当前星级，则取消筛选
-      if (filterRating === rating) {
-        filterRating = 0;
+      // 如果点击的是当前星级，则取消选中
+      if (selectedFilterRating === rating) {
+        selectedFilterRating = 0;
       } else {
-        filterRating = rating;
+        selectedFilterRating = rating;
       }
 
-      // 更新筛选星级显示，点亮逻辑与评分一致
+      // 更新筛选星级显示
       document.querySelectorAll('.filter-star').forEach(star => {
         const starRating = parseInt(star.dataset.rating);
-        star.classList.toggle('active', starRating <= filterRating);
+        star.classList.toggle('active', starRating <= selectedFilterRating);
       });
 
-      applyFilter();
+      // 更新筛选状态提示
+      updateFilterStatusForRating();
+    }
+
+    function updateFilterStatusForRating() {
+      const statusElement = document.getElementById('filterStatus');
+      if (selectedFilterRating > 0) {
+        statusElement.textContent = `已选 ${selectedFilterRating} 星，点击筛选按钮确认`;
+      } else {
+        statusElement.textContent = filterCondition === 'all' ? '未筛选' : getFilterStatusText();
+      }
+    }
+
+    function getFilterStatusText() {
+      switch (filterCondition) {
+        case 'equal': return `等于 ${filterRating} 星`;
+        case 'greater': return `≥ ${filterRating} 星`;
+        case 'less': return `≤ ${filterRating} 星`;
+        case 'none': return '无星';
+        case 'any': return '有星';
+        default: return '未筛选';
+      }
     }
 
     // 导出文件
@@ -4087,6 +4176,9 @@
 
     function updateRatingStats() {
       const stats = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      let jpgOnly = 0;
+      let rawOnly = 0;
+      let both = 0;
       
       imageGroups.forEach(group => {
         const file = group.jpg || group.raw;
@@ -4094,14 +4186,48 @@
           const rating = ratingsData[file.name]?.rating || 0;
           stats[rating]++;
         }
+        
+        if (group.jpg && group.raw) {
+          both++;
+        } else if (group.jpg) {
+          jpgOnly++;
+        } else if (group.raw) {
+          rawOnly++;
+        }
       });
       
-      document.getElementById('statsTotal').textContent = imageGroups.length;
-      document.getElementById('stats5').textContent = stats[5];
-      document.getElementById('stats4').textContent = stats[4];
-      document.getElementById('stats3').textContent = stats[3];
-      document.getElementById('stats2').textContent = stats[2];
-      document.getElementById('stats1').textContent = stats[1];
+      const total = imageGroups.length;
+      
+      document.querySelector('#statsJpgOnly span').textContent = jpgOnly;
+      document.querySelector('#statsRawOnly span').textContent = rawOnly;
+      document.querySelector('#statsBoth span').textContent = both;
+      document.querySelector('#statsTotal span').textContent = total;
+      
+      document.getElementById('filterStar5').textContent = stats[5];
+      document.getElementById('filterStar4').textContent = stats[4];
+      document.getElementById('filterStar3').textContent = stats[3];
+      document.getElementById('filterStar2').textContent = stats[2];
+      document.getElementById('filterStar1').textContent = stats[1];
+    }
+
+    function setFormatFilter(filter) {
+      formatFilter = filter;
+      
+      document.querySelectorAll('.title-bar-stats-row:first-child .title-bar-stats-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      if (filter === 'jpg') {
+        document.getElementById('statsJpgOnly').classList.add('active');
+      } else if (filter === 'raw') {
+        document.getElementById('statsRawOnly').classList.add('active');
+      } else if (filter === 'both') {
+        document.getElementById('statsBoth').classList.add('active');
+      } else {
+        document.getElementById('statsTotal').classList.add('active');
+      }
+      
+      applyFilter();
     }
 
     function showProgress(title) {
