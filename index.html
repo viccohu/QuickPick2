@@ -102,6 +102,72 @@
       color: #667eea;
     }
 
+    /* 非阻塞进度条 - 标题栏下方 */
+    .header-progress {
+      height: 3px;
+      background: transparent;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .header-progress.visible {
+      opacity: 1;
+    }
+
+    .header-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      width: 0%;
+      transition: width 0.2s ease;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .header-progress-text {
+      position: absolute;
+      left: 20px;
+      top: 6px;
+      font-size: 11px;
+      color: #888;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .header-progress.visible .header-progress-text {
+      opacity: 1;
+    }
+
+    .header-progress-bar.complete {
+      animation: progressComplete 0.6s ease;
+    }
+
+    @keyframes progressComplete {
+      0% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+      }
+      50% {
+        box-shadow: 0 0 20px 5px rgba(102, 126, 234, 0.8);
+        filter: brightness(1.3);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+      }
+    }
+
+    /* 全局禁止选取（输入框除外） */
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    input, textarea {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
     /* 窗口控制按钮 - 黑色主题 */
     .window-controls {
       display: flex;
@@ -305,15 +371,15 @@
       font-size: 18px;
       cursor: pointer;
       color: rgba(255, 255, 255, 0.15);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .star:hover {
-      color: #667eea;
       transform: scale(1.1);
     }
 
-    .star.active {
+    .star.active,
+    .star.hover-active {
       color: #667eea;
       text-shadow: 0 0 10px rgba(102, 126, 234, 0.4);
     }
@@ -346,7 +412,7 @@
       cursor: pointer;
       border: 2px solid transparent;
       border-radius: 6px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      /* transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); */
       overflow: visible;
       background: #2a2a2a;
     }
@@ -359,6 +425,11 @@
     .thumbnail-item.active {
       border-color: #667eea;
       box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+    }
+
+    .thumbnail-item.selected {
+      border-color: #22c55e;
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
     }
 
     .thumbnail-image-wrapper {
@@ -395,49 +466,54 @@
     }
 
     .thumbnail-format {
-      position: absolute;
-      padding: 2px 4px;
-      border-radius: 2px;
-      font-size: 8px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 9px;
       font-weight: 500;
-      background: rgba(40, 40, 40, 0.9);
-      color: #888;
-      z-index: 1;
+      background: rgba(60, 60, 60, 0.9);
+      color: #aaa;
     }
 
     .thumbnail-format.jpg {
-      top: 3px;
-      left: 3px;
+      background: rgba(102, 126, 234, 0.3);
+      color: #667eea;
     }
 
     .thumbnail-format.raw {
-      top: 3px;
-      right: 3px;
+      background: rgba(234, 179, 8, 0.2);
+      color: #eab308;
     }
 
     .thumbnail-rating {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 1px;
-      padding: 3px 0;
+      gap: 3px;
+      padding: 4px 0;
       background: #1a1a1a;
       border-radius: 0 0 4px 4px;
+      flex-wrap: wrap;
+    }
+
+    .thumbnail-rating-formats {
+      display: flex;
+      gap: 2px;
+      margin-right: 4px;
     }
 
     .thumbnail-star {
       font-size: 10px;
       cursor: pointer;
       color: #444;
-      transition: all 0.15s ease;
+      transition: all 0.1s ease;
     }
 
     .thumbnail-star:hover {
-      color: #667eea;
-      transform: scale(1.1);
+      transform: scale(1.15);
     }
 
-    .thumbnail-star.active {
+    .thumbnail-star.active,
+    .thumbnail-star.hover-active {
       color: #667eea;
     }
 
@@ -522,15 +598,15 @@
       font-size: 18px;
       cursor: pointer;
       color: rgba(255, 255, 255, 0.15);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .filter-star:hover {
-      color: #667eea;
       transform: scale(1.2);
     }
 
-    .filter-star.active {
+    .filter-star.active,
+    .filter-star.hover-active {
       color: #667eea;
       text-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
     }
@@ -1090,62 +1166,6 @@
       color: #e0e0e0;
     }
 
-    /* 进度指示器 */
-    .progress-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(10px);
-      z-index: 9999;
-      display: none;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .progress-overlay.visible {
-      display: flex;
-    }
-
-    .progress-container {
-      background: #1a1a1a;
-      border-radius: 12px;
-      padding: 30px 40px;
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    }
-
-    .progress-title {
-      color: #e0e0e0;
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 20px;
-    }
-
-    .progress-bar-container {
-      width: 300px;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-bottom: 15px;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #667eea, #764ba2);
-      border-radius: 3px;
-      transition: width 0.3s ease;
-    }
-
-    .progress-text {
-      color: #888;
-      font-size: 13px;
-    }
-
     /* 加载动画 */
     @keyframes fadeIn {
       from {
@@ -1369,8 +1389,7 @@
     }
 
     .list-view .thumbnail-format {
-      position: static;
-      margin-left: 8px;
+      margin-left: 4px;
     }
 
     .detail-view .thumbnail-container {
@@ -1495,7 +1514,7 @@
 
     [data-theme="sunset"] .path-button,
     [data-theme="sunset"] .filter-btn.active,
-    [data-theme="sunset"] .progress-bar {
+    [data-theme="sunset"] .header-progress-bar {
       background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
     }
 
@@ -1520,29 +1539,8 @@
 
     [data-theme="purple"] .path-button,
     [data-theme="purple"] .filter-btn.active,
-    [data-theme="purple"] .progress-bar {
+    [data-theme="purple"] .header-progress-bar {
       background: linear-gradient(135deg, #a855f7 0%, #d946ef 100%);
-    }
-
-    .progress-overlay {
-      backdrop-filter: blur(8px);
-    }
-
-    .progress-container {
-      min-width: 320px;
-    }
-
-    .progress-percentage {
-      font-size: 24px;
-      font-weight: 600;
-      color: #667eea;
-      margin-bottom: 8px;
-    }
-
-    .progress-detail {
-      font-size: 12px;
-      color: #888;
-      margin-top: 8px;
     }
   </style>
 </head>
@@ -1556,13 +1554,13 @@
       </div>
       <div class="title-bar-center">
         <div class="title-bar-stats" id="titleBarStats">
-          <span class="title-bar-stats-item"><i class="ri-star-fill"></i><span id="statsTotal">0</span></span>
+          <span class="title-bar-stats-item"><i class="ri-image-line"></i><span id="statsTotal">0</span></span>
           <span class="title-bar-stats-divider"></span>
-          <span class="title-bar-stats-item" title="5星"><span>5:</span><span id="stats5">0</span></span>
-          <span class="title-bar-stats-item" title="4星"><span>4:</span><span id="stats4">0</span></span>
-          <span class="title-bar-stats-item" title="3星"><span>3:</span><span id="stats3">0</span></span>
-          <span class="title-bar-stats-item" title="2星"><span>2:</span><span id="stats2">0</span></span>
-          <span class="title-bar-stats-item" title="1星"><span>1:</span><span id="stats1">0</span></span>
+          <span class="title-bar-stats-item" title="1星"><i class="ri-star-fill" style="color: #fef9c3;"></i><span id="stats1">0</span></span>
+          <span class="title-bar-stats-item" title="2星"><i class="ri-star-fill" style="color: #fef3c7;"></i><span id="stats2">0</span></span>
+          <span class="title-bar-stats-item" title="3星"><i class="ri-star-fill" style="color: #fde68a;"></i><span id="stats3">0</span></span>
+          <span class="title-bar-stats-item" title="4星"><i class="ri-star-fill" style="color: #fcd34d;"></i><span id="stats4">0</span></span>
+          <span class="title-bar-stats-item" title="5星"><i class="ri-star-fill" style="color: #fbbf24;"></i><span id="stats5">0</span></span>
         </div>
         <button class="title-bar-help" id="helpButton" title="快捷键帮助"><i class="ri-keyboard-line"></i></button>
       </div>
@@ -1571,6 +1569,11 @@
         <button class="control-button maximize"><i class="ri-checkbox-blank-line"></i></button>
         <button class="control-button close"><i class="ri-close-line"></i></button>
       </div>
+    </div>
+    <!-- 非阻塞进度条 -->
+    <div class="header-progress" id="headerProgress">
+      <div class="header-progress-bar" id="headerProgressBar"></div>
+      <div class="header-progress-text" id="headerProgressText"></div>
     </div>
     <!-- 顶部路径管理模块 -->
     <div class="path-container">
@@ -1812,19 +1815,6 @@
       </div>
     </div>
 
-    <!-- 进度指示器 -->
-    <div class="progress-overlay" id="progressOverlay">
-      <div class="progress-container">
-        <div class="progress-percentage" id="progressPercentage">0%</div>
-        <div class="progress-title" id="progressTitle">加载中...</div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="progressBar" style="width: 0%"></div>
-        </div>
-        <div class="progress-text" id="progressText">0 / 0</div>
-        <div class="progress-detail" id="progressDetail"></div>
-      </div>
-    </div>
-
     <!-- 快捷键帮助弹窗 -->
     <div class="help-modal" id="helpModal">
       <div class="help-modal-content">
@@ -1844,20 +1834,28 @@
             <div class="help-item"><span class="key">1-5</span> 设置1-5星</div>
             <div class="help-item"><span class="key">0</span> 取消评级</div>
             <div class="help-item"><span class="key">Space</span> 切换标记</div>
-            <div class="help-item"><span class="key">Delete</span> 标记为废片</div>
+            <div class="help-item"><span class="key">Delete</span> 标记/取消废片</div>
           </div>
           <div class="help-section">
             <h4>缩放</h4>
             <div class="help-item"><span class="key">+</span> 放大</div>
             <div class="help-item"><span class="key">-</span> 缩小</div>
-            <div class="help-item"><span class="key">Esc</span> 重置缩放</div>
+            <div class="help-item"><span class="key">Esc</span> 重置缩放/退出批量模式</div>
+          </div>
+          <div class="help-section">
+            <h4>批量操作</h4>
+            <div class="help-item"><span class="key">B</span> 进入/退出批量模式</div>
+            <div class="help-item"><span class="key">Ctrl+A</span> 全选缩略图</div>
+            <div class="help-item"><span class="key">Shift+点击</span> 范围多选</div>
+            <div class="help-item"><span class="key">1-5</span> 批量设置星级</div>
+            <div class="help-item"><span class="key">Delete</span> 批量标记废片</div>
           </div>
           <div class="help-section">
             <h4>其他</h4>
             <div class="help-item"><span class="key">F</span> 全屏模式</div>
+            <div class="help-item"><span class="key">M</span> 开启/关闭放大镜</div>
+            <div class="help-item"><span class="key">右键</span> 关闭放大镜</div>
             <div class="help-item"><span class="key">Ctrl+E</span> 导出文件</div>
-            <div class="help-item"><span class="key">Ctrl+A</span> 全选缩略图</div>
-            <div class="help-item"><span class="key">Esc</span> 退出批量模式</div>
           </div>
         </div>
       </div>
@@ -2015,6 +2013,25 @@
           const rating = parseInt(star.dataset.rating);
           setRating(rating);
         });
+        
+        // hover效果 - 选高星级，低星级都亮
+        star.addEventListener('mouseenter', () => {
+          const rating = parseInt(star.dataset.rating);
+          document.querySelectorAll('.star').forEach(s => {
+            const sRating = parseInt(s.dataset.rating);
+            if (sRating <= rating) {
+              s.classList.add('hover-active');
+            } else {
+              s.classList.remove('hover-active');
+            }
+          });
+        });
+        
+        star.addEventListener('mouseleave', () => {
+          document.querySelectorAll('.star').forEach(s => {
+            s.classList.remove('hover-active');
+          });
+        });
       });
 
       // 筛选
@@ -2028,6 +2045,25 @@
         star.addEventListener('click', () => {
           const rating = parseInt(star.dataset.rating);
           setFilterRating(rating);
+        });
+        
+        // hover效果 - 选高星级，低星级都亮
+        star.addEventListener('mouseenter', () => {
+          const rating = parseInt(star.dataset.rating);
+          document.querySelectorAll('.filter-star').forEach(s => {
+            const sRating = parseInt(s.dataset.rating);
+            if (sRating <= rating) {
+              s.classList.add('hover-active');
+            } else {
+              s.classList.remove('hover-active');
+            }
+          });
+        });
+        
+        star.addEventListener('mouseleave', () => {
+          document.querySelectorAll('.filter-star').forEach(s => {
+            s.classList.remove('hover-active');
+          });
         });
       });
 
@@ -2063,10 +2099,8 @@
 
       // 键盘快捷键
       document.addEventListener('keydown', (e) => {
-        // 如果焦点在输入框中，不处理快捷键
         if (e.target.tagName === 'INPUT') return;
         
-        // Ctrl组合键
         if (e.ctrlKey || e.metaKey) {
           switch (e.key.toLowerCase()) {
             case 'e':
@@ -2084,14 +2118,12 @@
         switch (e.key) {
           case 'ArrowLeft':
             e.preventDefault();
-            // 防止按住方向键时连续翻页
             if (!e.repeat) {
               navigateImage(-1);
             }
             break;
           case 'ArrowRight':
             e.preventDefault();
-            // 防止按住方向键时连续翻页
             if (!e.repeat) {
               navigateImage(1);
             }
@@ -2125,9 +2157,17 @@
             e.preventDefault();
             scaleImage(0.8);
             break;
+          case 'b':
+            e.preventDefault();
+            toggleBatchMode();
+            break;
           case 'f':
             e.preventDefault();
             toggleFullscreen();
+            break;
+          case 'm':
+            e.preventDefault();
+            toggleMagnifier(!magnifierEnabled);
             break;
           case 'Delete':
           case 'Backspace':
@@ -2152,7 +2192,9 @@
             break;
           case 'Escape':
             e.preventDefault();
-            if (batchMode) {
+            if (magnifierEnabled) {
+              toggleMagnifier(false);
+            } else if (batchMode) {
               toggleBatchMode();
             } else {
               resetZoom();
@@ -2203,22 +2245,20 @@
       previewWrapper.addEventListener('mouseleave', endDrag);
       
       const thumbnailContainer = document.getElementById('thumbnailContainer');
-      thumbnailContainer.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        thumbnailContainer.scrollLeft += e.deltaY;
-        handleThumbnailScroll(filteredGroups);
-      }, { passive: false });
       
-      thumbnailContainer.addEventListener('scroll', () => {
-        handleThumbnailScroll(filteredGroups);
-      });
+      thumbnailContainer.addEventListener('wheel', (e) => {
+        if (e.deltaY !== 0) {
+          e.preventDefault();
+          thumbnailContainer.scrollLeft += e.deltaY;
+        }
+      }, { passive: false });
       
       // 批量模式下双击预览图选中/取消选中
       previewWrapper.addEventListener('dblclick', (e) => {
         if (!batchMode) return;
         const img = e.target.closest('.preview-image');
         if (img) {
-          toggleThumbnailSelection(currentIndex);
+          toggleThumbnailSelection(currentIndex, e.shiftKey);
         }
       });
     }
@@ -2263,10 +2303,14 @@
           rawPath = rawInput;
         }
 
+        // 显示进度条
+        showProgress('加载图片...');
+
         // 扫描文件
         await scanFiles();
       } catch (error) {
         console.error('加载图片失败:', error);
+        hideProgress();
         showMessage('错误', '操作失败', 'error');
       }
     }
@@ -2277,6 +2321,9 @@
         const jpgFiles = [];
         const rawFiles = [];
 
+        // 更新进度
+        updateProgress(0, 4, '扫描JPG文件...');
+
         // 扫描JPG文件
         if (jpgPath) {
           const files = await window.electronAPI.fs.readdir(jpgPath);
@@ -2286,6 +2333,8 @@
           }).map(file => ({ path: joinPath(jpgPath, file), name: file, type: 'jpg' })));
         }
 
+        updateProgress(1, 4, '扫描RAW文件...');
+
         // 扫描RAW文件
         if (rawPath) {
           const files = await window.electronAPI.fs.readdir(rawPath);
@@ -2294,8 +2343,12 @@
           }).map(file => ({ path: joinPath(rawPath, file), name: file, type: 'raw' })));
         }
 
+        updateProgress(2, 4, '生成图片组...');
+
         // 生成图片组
         generateImageGroups(jpgFiles, rawFiles);
+
+        updateProgress(3, 4, '加载评级数据...');
 
         // 加载星级数据
         await loadRatingsData();
@@ -2309,8 +2362,12 @@
         } else {
           showNoImage();
         }
+
+        // 隐藏进度条
+        hideProgress();
       } catch (error) {
         console.error('扫描文件失败:', error);
+        hideProgress();
         showMessage('错误', '扫描文件失败', 'error');
       }
     }
@@ -2390,10 +2447,6 @@
     function updateThumbnails(groups) {
       const wrapper = document.getElementById('thumbnailWrapper');
       wrapper.innerHTML = '';
-      wrapper.style.width = '';
-      wrapper.style.height = '';
-      wrapper.style.display = '';
-      wrapper.style.position = '';
 
       const fragment = document.createDocumentFragment();
 
@@ -2418,12 +2471,14 @@
         let formatLabels = '';
         if (group.jpg && group.raw) {
           formatLabels = `
-            <div class="thumbnail-format jpg">JPG</div>
-            <div class="thumbnail-format raw">RAW</div>
+            <div class="thumbnail-rating-formats">
+              <span class="thumbnail-format jpg">J</span>
+              <span class="thumbnail-format raw">R</span>
+            </div>
           `;
         } else {
           formatLabels = `
-            <div class="thumbnail-format ${thumbnailFile.type}">${thumbnailFile.type.toUpperCase()}</div>
+            <span class="thumbnail-format ${thumbnailFile.type}">${thumbnailFile.type.toUpperCase().charAt(0)}</span>
           `;
         }
 
@@ -2434,19 +2489,49 @@
           <div class="thumbnail-image-wrapper">
             <img class="thumbnail-image lazy" data-src="${thumbnailFile.path}" alt="${thumbnailFile.name}" loading="lazy">
             <div class="thumbnail-overlay"></div>
-            ${formatLabels}
           </div>
-          <div class="thumbnail-rating ${rejectedImages.has(fileName) ? 'rejected' : ''}">${ratingStars}</div>
+          <div class="thumbnail-rating ${rejectedImages.has(fileName) ? 'rejected' : ''}">${formatLabels}${ratingStars}</div>
         `;
 
         thumbnailItem.addEventListener('click', handleThumbnailClick);
         thumbnailItem.addEventListener('contextmenu', handleThumbnailRightClick);
 
+        // 缩略图星级hover效果
+        const thumbnailStars = thumbnailItem.querySelectorAll('.thumbnail-star');
+        thumbnailStars.forEach(star => {
+          star.addEventListener('mouseenter', (e) => {
+            e.stopPropagation();
+            const rating = parseInt(star.dataset.rating);
+            thumbnailStars.forEach(s => {
+              const sRating = parseInt(s.dataset.rating);
+              if (sRating <= rating) {
+                s.classList.add('hover-active');
+              } else {
+                s.classList.remove('hover-active');
+              }
+            });
+          });
+          
+          star.addEventListener('mouseleave', (e) => {
+            e.stopPropagation();
+            thumbnailStars.forEach(s => {
+              s.classList.remove('hover-active');
+            });
+          });
+        });
+
         const checkbox = thumbnailItem.querySelector('.thumbnail-checkbox');
         checkbox.addEventListener('click', (e) => {
           e.stopPropagation();
-          toggleThumbnailSelection(index);
+          toggleThumbnailSelection(index, e.shiftKey);
         });
+
+        const img = thumbnailItem.querySelector('.thumbnail-image.lazy');
+        if (lazyImageObserver) {
+          lazyImageObserver.observe(img);
+        } else {
+          loadThumbnailImage(img);
+        }
 
         fragment.appendChild(thumbnailItem);
       });
@@ -2468,6 +2553,9 @@
         const star = e.target.closest('.thumbnail-star');
         const starRating = parseInt(star.dataset.rating);
         setThumbnailRating(index, starRating);
+      } else if (batchMode) {
+        showImage(index);
+        toggleThumbnailSelection(index, e.shiftKey);
       } else {
         showImage(index);
       }
@@ -2476,13 +2564,12 @@
     function handleThumbnailRightClick(e) {
       e.preventDefault();
       
-      // 只在批量模式下处理右键点击
       if (!batchMode) return;
       
       const thumbnailItem = e.currentTarget;
       const index = parseInt(thumbnailItem.dataset.index);
       
-      toggleThumbnailSelection(index);
+      toggleThumbnailSelection(index, e.shiftKey);
     }
 
     function initLazyImageObserver() {
@@ -2837,11 +2924,10 @@
       }
     }
 
-    // 放大镜功能
-    let magnifierEnabled = false; // 默认关闭
+    let magnifierEnabled = false;
     const magnifier = document.getElementById('magnifier');
     const magnifierImage = document.getElementById('magnifierImage');
-    const magnifierZoom = 2.5; // 放大倍数
+    const magnifierZoom = 2.5;
 
     function initMagnifier() {
       const previewWrapper = document.getElementById('previewWrapper');
@@ -2860,52 +2946,57 @@
       
       previewWrapper.addEventListener('mouseleave', hideMagnifier);
       
-      // 放大镜开关按钮
-      const magnifierToggle = document.getElementById('magnifierToggle');
-      magnifierToggle.addEventListener('click', () => {
-        magnifierEnabled = !magnifierEnabled;
-        magnifierToggle.classList.toggle('active', magnifierEnabled);
-        magnifierToggle.title = magnifierEnabled ? '放大镜 (已开启)' : '放大镜 (默认关闭)';
-        if (!magnifierEnabled) {
-          hideMagnifier();
+      previewWrapper.addEventListener('contextmenu', (e) => {
+        if (magnifierEnabled) {
+          e.preventDefault();
+          toggleMagnifier(false);
         }
       });
+      
+      const magnifierToggle = document.getElementById('magnifierToggle');
+      magnifierToggle.addEventListener('click', () => {
+        toggleMagnifier(!magnifierEnabled);
+      });
+    }
+
+    function toggleMagnifier(enable) {
+      magnifierEnabled = enable;
+      const magnifierToggle = document.getElementById('magnifierToggle');
+      magnifierToggle.classList.toggle('active', magnifierEnabled);
+      magnifierToggle.title = magnifierEnabled ? '放大镜 (已开启)' : '放大镜 (默认关闭)';
+      if (!magnifierEnabled) {
+        hideMagnifier();
+      }
     }
 
     function showMagnifier(e, img) {
       const imgRect = img.getBoundingClientRect();
       
-      // 检查鼠标是否在图片上
       if (e.clientX < imgRect.left || e.clientX > imgRect.right ||
           e.clientY < imgRect.top || e.clientY > imgRect.bottom) {
         hideMagnifier();
         return;
       }
       
-      // 设置放大镜图片源
       if (magnifierImage.src !== img.src) {
         magnifierImage.src = img.src;
       }
       
-      // 计算放大后的尺寸
       const zoomedWidth = imgRect.width * magnifierZoom;
       const zoomedHeight = imgRect.height * magnifierZoom;
       
       magnifierImage.style.width = zoomedWidth + 'px';
       magnifierImage.style.height = zoomedHeight + 'px';
       
-      // 计算鼠标在图片上的位置
       const mouseX = e.clientX - imgRect.left;
       const mouseY = e.clientY - imgRect.top;
       
-      // 计算放大镜图片的位置（使鼠标位置居中）
       const magnifierX = -mouseX * magnifierZoom + 100;
       const magnifierY = -mouseY * magnifierZoom + 100;
       
       magnifierImage.style.left = magnifierX + 'px';
       magnifierImage.style.top = magnifierY + 'px';
       
-      // 设置放大镜位置
       magnifier.style.left = (e.clientX - 100) + 'px';
       magnifier.style.top = (e.clientY - 100) + 'px';
       
@@ -2916,9 +3007,6 @@
       magnifier.classList.remove('visible');
     }
 
-
-
-    // 重置缩放
     function resetZoom() {
       currentScale = 1;
       offsetX = 0;
@@ -3008,12 +3096,42 @@
       
       updateThumbnailCheckboxes();
       updateBatchCount();
+      
+      const group = filteredGroups[currentIndex];
+      if (group) {
+        updateRatingDisplay(group.jpg?.path || group.raw?.path);
+      }
+    }
+
+    let lastSelectedIndex = -1;
+
+    function toggleThumbnailSelection(index, shiftKey = false) {
+      if (shiftKey && lastSelectedIndex >= 0 && lastSelectedIndex !== index) {
+        const start = Math.min(lastSelectedIndex, index);
+        const end = Math.max(lastSelectedIndex, index);
+        
+        for (let i = start; i <= end; i++) {
+          selectedThumbnails.add(i);
+        }
+      } else {
+        if (selectedThumbnails.has(index)) {
+          selectedThumbnails.delete(index);
+        } else {
+          selectedThumbnails.add(index);
+        }
+        lastSelectedIndex = index;
+      }
+      updateThumbnailCheckboxes();
+      updateBatchCount();
+      updateRatingDisplay(null);
     }
 
     function clearBatchSelection() {
       selectedThumbnails.clear();
+      lastSelectedIndex = -1;
       updateThumbnailCheckboxes();
       updateBatchCount();
+      updateRatingDisplay(null);
     }
 
     function updateThumbnailCheckboxes() {
@@ -3022,23 +3140,17 @@
         const index = parseInt(checkbox.dataset.index);
         checkbox.classList.toggle('checked', selectedThumbnails.has(index));
       });
+      
+      document.querySelectorAll('.thumbnail-item').forEach(item => {
+        const index = parseInt(item.dataset.index);
+        item.classList.toggle('selected', selectedThumbnails.has(index));
+      });
     }
 
     function updateBatchCount() {
       document.getElementById('batchCountInline').textContent = selectedThumbnails.size;
     }
 
-    function toggleThumbnailSelection(index) {
-      if (selectedThumbnails.has(index)) {
-        selectedThumbnails.delete(index);
-      } else {
-        selectedThumbnails.add(index);
-      }
-      updateThumbnailCheckboxes();
-      updateBatchCount();
-    }
-
-    // 废片标记功能
     function toggleRejected() {
       const group = filteredGroups[currentIndex];
       if (!group) return;
@@ -3162,7 +3274,23 @@
         return;
       }
 
-      showProgress('批量设置评级...');
+      let allSameRating = true;
+      for (const index of selectedThumbnails) {
+        const group = filteredGroups[index];
+        if (!group) continue;
+        const file = group.jpg || group.raw;
+        if (!file) continue;
+        const currentRating = ratingsData[file.name]?.rating || 0;
+        if (currentRating !== rating) {
+          allSameRating = false;
+          break;
+        }
+      }
+
+      const targetRating = allSameRating ? 0 : rating;
+      const actionText = allSameRating ? '取消评级...' : '批量设置评级...';
+
+      showProgress(actionText);
       let processed = 0;
       const total = selectedThumbnails.size;
 
@@ -3171,12 +3299,20 @@
         if (!group) continue;
 
         if (group.jpg) {
-          updateRating(group.jpg.path, rating);
-          window.electronAPI.image.saveRatingAsync(group.jpg.path, ratingsData[group.jpg.name].rating);
+          const fileName = group.jpg.name;
+          if (!ratingsData[fileName]) {
+            ratingsData[fileName] = { rating: 0, tags: [] };
+          }
+          ratingsData[fileName].rating = targetRating;
+          window.electronAPI.image.saveRatingAsync(group.jpg.path, ratingsData[fileName].rating);
         }
         if (group.raw) {
-          updateRating(group.raw.path, rating);
-          window.electronAPI.image.saveRatingAsync(group.raw.path, ratingsData[group.raw.name].rating);
+          const fileName = group.raw.name;
+          if (!ratingsData[fileName]) {
+            ratingsData[fileName] = { rating: 0, tags: [] };
+          }
+          ratingsData[fileName].rating = targetRating;
+          window.electronAPI.image.saveRatingAsync(group.raw.path, ratingsData[fileName].rating);
         }
 
         processed++;
@@ -3184,11 +3320,117 @@
       }
 
       hideProgress();
-      updateThumbnails(filteredGroups);
-      // showMessage('完成', `已为 ${processed} 张图片设置评级`, 'info');
+      updateThumbnailRatings();
+      updateRatingStats();
+      
+      const resultText = targetRating === 0 
+        ? `已取消 ${total} 张图片的评级` 
+        : `已将 ${total} 张图片设为 ${targetRating} 星`;
+      showQuickToast(resultText);
     }
 
-    // EXIF信息面板
+    function showQuickToast(message) {
+      let toast = document.getElementById('quickToast');
+      const previewContainer = document.querySelector('.preview-container');
+      
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'quickToast';
+        toast.style.cssText = `
+          position: absolute;
+          bottom: 60px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(40, 40, 40, 0.85);
+          color: #e0e0e0;
+          padding: 8px 20px;
+          border-radius: 20px;
+          font-size: 13px;
+          z-index: 100;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        `;
+        previewContainer.appendChild(toast);
+      } else if (toast.parentElement !== previewContainer) {
+        previewContainer.appendChild(toast);
+      }
+      toast.textContent = message;
+      toast.style.opacity = '1';
+      setTimeout(() => {
+        toast.style.opacity = '0';
+      }, 2000);
+    }
+
+    function updateThumbnailRatings() {
+      const items = document.querySelectorAll('.thumbnail-item');
+      items.forEach((item, index) => {
+        const group = filteredGroups[index];
+        if (!group) return;
+        
+        const thumbnailFile = group.jpg || group.raw;
+        if (!thumbnailFile) return;
+        
+        const fileName = thumbnailFile.name;
+        const rating = ratingsData[fileName]?.rating || 0;
+        
+        const stars = item.querySelectorAll('.thumbnail-star');
+        stars.forEach((star, i) => {
+          if (i < rating) {
+            star.classList.add('active');
+          } else {
+            star.classList.remove('active');
+          }
+        });
+        
+        const ratingContainer = item.querySelector('.thumbnail-rating');
+        if (rejectedImages.has(fileName)) {
+          ratingContainer.classList.add('rejected');
+        } else {
+          ratingContainer.classList.remove('rejected');
+        }
+      });
+    }
+
+    function batchToggleRejected() {
+      if (selectedThumbnails.size === 0) {
+        showMessage('提示', '请先选择图片', 'info');
+        return;
+      }
+
+      let addedCount = 0;
+      let removedCount = 0;
+
+      for (const index of selectedThumbnails) {
+        const group = filteredGroups[index];
+        if (!group) continue;
+
+        const file = group.jpg || group.raw;
+        if (!file) continue;
+
+        const fileName = file.name;
+        
+        if (rejectedImages.has(fileName)) {
+          rejectedImages.delete(fileName);
+          removedCount++;
+        } else {
+          rejectedImages.add(fileName);
+          addedCount++;
+        }
+
+        updateRejectedBadge(index);
+      }
+
+      updateDeleteButton();
+      
+      // const message = [];
+      // if (addedCount > 0) message.push(`标记 ${addedCount} 张`);
+      // if (removedCount > 0) message.push(`取消 ${removedCount} 张`);
+      // showMessage('完成', message.join('，'), 'info');
+    }
+
     let exifPanelVisible = false;
 
     function initExifPanel() {
@@ -3315,6 +3557,14 @@
     // 更新星级显示
     function updateRatingDisplay(filePath) {
       const stars = document.querySelectorAll('.star');
+      
+      if (batchMode && selectedThumbnails.size > 0) {
+        stars.forEach(star => {
+          star.classList.remove('active');
+        });
+        return;
+      }
+      
       const fileName = filePath ? filePath.split(/[/\\]/).pop() : '';
       const rating = fileName ? (ratingsData[fileName]?.rating || 0) : 0;
 
@@ -3579,11 +3829,6 @@
           }
         }
         
-        // 显示进度指示器
-        if (allFiles.length > 50) {
-          showProgress('加载评级数据...');
-        }
-        
         const totalFiles = allFiles.length;
         let processedFiles = 0;
         
@@ -3611,17 +3856,13 @@
           
           // 更新进度
           processedFiles += batch.length;
-          if (allFiles.length > 50) {
-            updateProgress(processedFiles, totalFiles);
+          if (totalFiles > 0) {
+            updateProgress(processedFiles, totalFiles, `加载评级数据... ${processedFiles}/${totalFiles}`);
           }
         }
-        
-        // 隐藏进度指示器
-        hideProgress();
       } catch (error) {
         console.error('加载星级数据失败:', error);
         ratingsData = {};
-        hideProgress();
       }
     }
 
@@ -3864,28 +4105,30 @@
     }
 
     function showProgress(title) {
-      const overlay = document.getElementById('progressOverlay');
-      document.getElementById('progressTitle').textContent = title || '处理中...';
-      document.getElementById('progressBar').style.width = '0%';
-      document.getElementById('progressPercentage').textContent = '0%';
-      document.getElementById('progressText').textContent = '0 / 0';
-      document.getElementById('progressDetail').textContent = '';
-      overlay.classList.add('visible');
+      const progress = document.getElementById('headerProgress');
+      const bar = document.getElementById('headerProgressBar');
+      bar.classList.remove('complete');
+      document.getElementById('headerProgressText').textContent = title || '处理中...';
+      bar.style.width = '0%';
+      progress.classList.add('visible');
     }
 
     function hideProgress() {
-      const overlay = document.getElementById('progressOverlay');
-      overlay.classList.remove('visible');
+      const progress = document.getElementById('headerProgress');
+      const bar = document.getElementById('headerProgressBar');
+      bar.classList.add('complete');
+      setTimeout(() => {
+        progress.classList.remove('visible');
+        bar.classList.remove('complete');
+      }, 600);
     }
 
     function updateProgress(current, total, text, detail) {
       const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
-      document.getElementById('progressBar').style.width = percentage + '%';
-      document.getElementById('progressPercentage').textContent = percentage + '%';
-      document.getElementById('progressText').textContent = text || `${current} / ${total}`;
-      if (detail) {
-        document.getElementById('progressDetail').textContent = detail;
-      }
+      document.getElementById('headerProgressBar').style.width = percentage + '%';
+      const progressText = text || `${current} / ${total}`;
+      const title = document.getElementById('headerProgressText').textContent.split(' - ')[0];
+      document.getElementById('headerProgressText').textContent = `${title} - ${progressText} (${percentage}%)`;
     }
 
 
