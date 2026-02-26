@@ -2102,11 +2102,19 @@
           case '4':
           case '5':
             e.preventDefault();
-            setRating(parseInt(e.key));
+            if (batchMode && selectedThumbnails.size > 0) {
+              batchSetRating(parseInt(e.key));
+            } else {
+              setRating(parseInt(e.key));
+            }
             break;
           case '0':
             e.preventDefault();
-            setRating(0);
+            if (batchMode && selectedThumbnails.size > 0) {
+              batchSetRating(0);
+            } else {
+              setRating(0);
+            }
             break;
           case '+':
           case '=':
@@ -2124,7 +2132,11 @@
           case 'Delete':
           case 'Backspace':
             e.preventDefault();
-            toggleRejected();
+            if (batchMode && selectedThumbnails.size > 0) {
+              batchToggleRejected();
+            } else {
+              toggleRejected();
+            }
             break;
           case ' ':
             e.preventDefault();
@@ -2190,12 +2202,16 @@
       document.addEventListener('mouseleave', endDrag);
       previewWrapper.addEventListener('mouseleave', endDrag);
       
-      // 缩略图横向滚动功能
       const thumbnailContainer = document.getElementById('thumbnailContainer');
       thumbnailContainer.addEventListener('wheel', (e) => {
         e.preventDefault();
         thumbnailContainer.scrollLeft += e.deltaY;
+        handleThumbnailScroll(filteredGroups);
       }, { passive: false });
+      
+      thumbnailContainer.addEventListener('scroll', () => {
+        handleThumbnailScroll(filteredGroups);
+      });
       
       // 批量模式下双击预览图选中/取消选中
       previewWrapper.addEventListener('dblclick', (e) => {
@@ -2371,147 +2387,14 @@
       }
     }
 
-    let virtualScrollData = {
-      itemWidth: 130,
-      itemHeight: 110,
-      visibleStart: 0,
-      visibleEnd: 0,
-      containerWidth: 0,
-      scrollLeft: 0
-    };
-
     function updateThumbnails(groups) {
       const wrapper = document.getElementById('thumbnailWrapper');
-      const container = document.getElementById('thumbnailContainer');
-      
-      if (currentView !== 'grid') {
-        wrapper.innerHTML = '';
-        renderAllThumbnails(groups);
-        return;
-      }
-      
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
-      
-      const itemsPerRow = Math.floor(containerWidth / virtualScrollData.itemWidth) || 1;
-      const totalRows = Math.ceil(groups.length / itemsPerRow);
-      const totalWidth = groups.length * virtualScrollData.itemWidth;
-      
-      wrapper.style.width = `${totalWidth}px`;
-      wrapper.style.height = '100%';
-      wrapper.style.position = 'relative';
       wrapper.innerHTML = '';
-      
-      virtualScrollData.containerWidth = containerWidth;
-      
-      updateVirtualScroll(groups);
-      
-      container.onscroll = () => {
-        virtualScrollData.scrollLeft = container.scrollLeft;
-        requestAnimationFrame(() => updateVirtualScroll(groups));
-      };
-    }
+      wrapper.style.width = '';
+      wrapper.style.height = '';
+      wrapper.style.display = '';
+      wrapper.style.position = '';
 
-    function updateVirtualScroll(groups) {
-      const wrapper = document.getElementById('thumbnailWrapper');
-      const container = document.getElementById('thumbnailContainer');
-      
-      const scrollLeft = container.scrollLeft;
-      const containerWidth = container.clientWidth;
-      
-      const startIndex = Math.max(0, Math.floor(scrollLeft / virtualScrollData.itemWidth) - 5);
-      const endIndex = Math.min(groups.length, Math.ceil((scrollLeft + containerWidth) / virtualScrollData.itemWidth) + 5);
-      
-      if (startIndex === virtualScrollData.visibleStart && endIndex === virtualScrollData.visibleEnd) {
-        return;
-      }
-      
-      virtualScrollData.visibleStart = startIndex;
-      virtualScrollData.visibleEnd = endIndex;
-      
-      const existingItems = new Map();
-      wrapper.querySelectorAll('.thumbnail-item').forEach(item => {
-        const index = parseInt(item.dataset.index);
-        if (index >= startIndex && index < endIndex) {
-          existingItems.set(index, item);
-        } else {
-          item.remove();
-        }
-      });
-      
-      const fragment = document.createDocumentFragment();
-      
-      for (let index = startIndex; index < endIndex; index++) {
-        if (existingItems.has(index)) continue;
-        
-        const group = groups[index];
-        if (!group) continue;
-        
-        const thumbnailFile = group.jpg || group.raw;
-        if (!thumbnailFile) continue;
-        
-        const fileName = thumbnailFile.name;
-        const rating = ratingsData[fileName]?.rating || 0;
-        
-        let ratingStars = '';
-        for (let i = 1; i <= 5; i++) {
-          const isActive = i <= rating ? 'active' : '';
-          ratingStars += `<span class="thumbnail-star ${isActive}" data-rating="${i}" data-index="${index}"><i class="ri-star-fill"></i></span>`;
-        }
-
-        const thumbnailItem = document.createElement('div');
-        thumbnailItem.className = 'thumbnail-item';
-        thumbnailItem.dataset.index = index;
-        thumbnailItem.dataset.filename = fileName;
-        thumbnailItem.style.position = 'absolute';
-        thumbnailItem.style.left = `${index * virtualScrollData.itemWidth}px`;
-        thumbnailItem.style.top = '0';
-
-        let formatLabels = '';
-        if (group.jpg && group.raw) {
-          formatLabels = `
-            <div class="thumbnail-format jpg">JPG</div>
-            <div class="thumbnail-format raw">RAW</div>
-          `;
-        } else {
-          formatLabels = `
-            <div class="thumbnail-format ${thumbnailFile.type}">${thumbnailFile.type.toUpperCase()}</div>
-          `;
-        }
-
-        thumbnailItem.innerHTML = `
-          <div class="thumbnail-checkbox" data-index="${index}">
-            <i class="ri-check-line"></i>
-          </div>
-          <div class="thumbnail-image-wrapper">
-            <img class="thumbnail-image lazy" data-src="${thumbnailFile.path}" alt="${thumbnailFile.name}" loading="lazy">
-            <div class="thumbnail-overlay"></div>
-            ${formatLabels}
-          </div>
-          <div class="thumbnail-rating ${rejectedImages.has(fileName) ? 'rejected' : ''}">${ratingStars}</div>
-        `;
-
-        thumbnailItem.addEventListener('click', handleThumbnailClick);
-        thumbnailItem.addEventListener('contextmenu', handleThumbnailRightClick);
-
-        const checkbox = thumbnailItem.querySelector('.thumbnail-checkbox');
-        checkbox.addEventListener('click', (e) => {
-          e.stopPropagation();
-          toggleThumbnailSelection(index);
-        });
-
-        fragment.appendChild(thumbnailItem);
-      }
-      
-      wrapper.appendChild(fragment);
-      
-      updateThumbnailCheckboxes();
-      updateThumbnailSelection(currentIndex);
-      setupLazyLoading();
-    }
-
-    function renderAllThumbnails(groups) {
-      const wrapper = document.getElementById('thumbnailWrapper');
       const fragment = document.createDocumentFragment();
 
       groups.forEach((group, index) => {
@@ -2574,11 +2457,13 @@
       setupLazyLoading();
     }
 
+    function handleThumbnailScroll(groups) {
+    }
+
     function handleThumbnailClick(e) {
       const thumbnailItem = e.currentTarget;
       const index = parseInt(thumbnailItem.dataset.index);
       
-      // 如果点击的是星级，不切换图片
       if (e.target.closest('.thumbnail-star')) {
         const star = e.target.closest('.thumbnail-star');
         const starRating = parseInt(star.dataset.rating);
@@ -2588,7 +2473,6 @@
       }
     }
 
-    // 缩略图右键点击事件处理
     function handleThumbnailRightClick(e) {
       e.preventDefault();
       
