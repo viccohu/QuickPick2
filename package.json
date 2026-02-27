@@ -19,8 +19,8 @@
   "devDependencies": {
     "electron": "^29.4.6",
     "electron-builder": "^24.0.0",
-    "node-gyp": "^10.0.0",
-    "node-addon-api": "^7.0.0"
+    "node-addon-api": "^7.0.0",
+    "node-gyp": "^10.0.0"
   },
   "build": {
     "appId": "com.quickpick2.app",
@@ -37,6 +37,7 @@
   "dependencies": {
     "exifreader": "^4.36.2",
     "exiftool-vendored": "^35.10.1",
+    "lightdrift-libraw": "^1.0.0-alpha.6",
     "remixicon": "^4.9.1",
     "sharp": "^0.34.5"
   },

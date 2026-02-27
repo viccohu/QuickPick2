@@ -4,7 +4,8 @@
       "target_name": "quickpick_native",
       "sources": [
         "quickpick_native.cc",
-        "raw_preview.cc"
+        "raw_preview.cc",
+        "wic_raw_preview.cc"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")"
@@ -22,6 +23,10 @@
           "defines": [
             "NAPI_DISABLE_CPP_EXCEPTIONS",
             "WIN32_LEAN_AND_MEAN"
+          ],
+          "libraries": [
+            "-lwindowscodecs.lib",
+            "-lole32.lib"
           ],
           "msvs_settings": {
             "VCCLCompilerTool": {

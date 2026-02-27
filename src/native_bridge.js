@@ -98,6 +98,112 @@ class NativeBridge {
         return null;
     }
     
+    async getWICPreview(filePath, maxSize = 2000) {
+        if (this.isNativeAvailable && nativeModule.getWICPreview) {
+            try {
+                const result = await nativeModule.getWICPreview(filePath, maxSize);
+                if (result.success && result.data) {
+                    return {
+                        data: result.data.toString('base64'),
+                        width: result.width,
+                        height: result.height,
+                        fromCache: result.fromCache,
+                        embeddedJpeg: result.embeddedJpeg,
+                        needsBackgroundDecode: result.needsBackgroundDecode
+                    };
+                }
+            } catch (e) {
+                console.error('[Native] WIC preview failed:', e);
+            }
+        }
+        return null;
+    }
+    
+    async decodeRAWInBackground(filePath, maxSize = 2000) {
+        if (this.isNativeAvailable && nativeModule.decodeRAWInBackground) {
+            try {
+                const result = await nativeModule.decodeRAWInBackground(filePath, maxSize);
+                if (result.success && result.data) {
+                    return {
+                        data: result.data.toString('base64'),
+                        width: result.width,
+                        height: result.height
+                    };
+                }
+            } catch (e) {
+                console.error('[Native] Background decode failed:', e);
+            }
+        }
+        return null;
+    }
+    
+    async getWICThumbnail(filePath, maxSize = 256) {
+        if (this.isNativeAvailable && nativeModule.getWICThumbnail) {
+            try {
+                const result = await nativeModule.getWICThumbnail(filePath, maxSize);
+                if (result.success && result.data) {
+                    return {
+                        data: result.data.toString('base64'),
+                        width: result.width,
+                        height: result.height
+                    };
+                }
+            } catch (e) {
+                console.error('[Native] WIC thumbnail failed:', e);
+            }
+        }
+        return null;
+    }
+    
+    initWICPreview() {
+        if (this.isNativeAvailable && nativeModule.initWICPreview) {
+            return nativeModule.initWICPreview();
+        }
+        return false;
+    }
+    
+    uninitWICPreview() {
+        if (this.isNativeAvailable && nativeModule.uninitWICPreview) {
+            return nativeModule.uninitWICPreview();
+        }
+        return false;
+    }
+    
+    setFileList(files) {
+        if (this.isNativeAvailable && nativeModule.setFileList) {
+            return nativeModule.setFileList(files);
+        }
+        return false;
+    }
+    
+    setCurrentFile(filePath) {
+        if (this.isNativeAvailable && nativeModule.setCurrentFile) {
+            return nativeModule.setCurrentFile(filePath);
+        }
+        return false;
+    }
+    
+    startPreload() {
+        if (this.isNativeAvailable && nativeModule.startPreload) {
+            return nativeModule.startPreload();
+        }
+        return false;
+    }
+    
+    stopPreload() {
+        if (this.isNativeAvailable && nativeModule.stopPreload) {
+            return nativeModule.stopPreload();
+        }
+        return false;
+    }
+    
+    clearWICCache() {
+        if (this.isNativeAvailable && nativeModule.clearWICCache) {
+            return nativeModule.clearWICCache();
+        }
+        return false;
+    }
+    
     processThumbnailResults(results) {
         const processed = {};
         

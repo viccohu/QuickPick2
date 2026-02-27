@@ -7,3 +7,6 @@ native/build
 *.ipdb
 *.iobj
 *.log
+.trae
+测试文件
+native/build/**/*

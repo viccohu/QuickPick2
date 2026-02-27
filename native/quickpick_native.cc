@@ -461,6 +461,16 @@ Napi::Value ReadExifRatings(const Napi::CallbackInfo& info);
 Napi::Value ScanFiles(const Napi::CallbackInfo& info);
 extern Napi::Value GetRawPreview(const Napi::CallbackInfo& info);
 extern Napi::Value GetRawPreviewSync(const Napi::CallbackInfo& info);
+extern Napi::Value GetWICPreview(const Napi::CallbackInfo& info);
+extern Napi::Value GetWICThumbnail(const Napi::CallbackInfo& info);
+extern Napi::Value DecodeRAWInBackground(const Napi::CallbackInfo& info);
+extern Napi::Value InitWICPreview(const Napi::CallbackInfo& info);
+extern Napi::Value UninitWICPreview(const Napi::CallbackInfo& info);
+extern Napi::Value SetFileList(const Napi::CallbackInfo& info);
+extern Napi::Value SetCurrentFile(const Napi::CallbackInfo& info);
+extern Napi::Value StartPreload(const Napi::CallbackInfo& info);
+extern Napi::Value StopPreload(const Napi::CallbackInfo& info);
+extern Napi::Value ClearWICCache(const Napi::CallbackInfo& info);
 
 Napi::Value GenerateThumbnails(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
@@ -553,6 +563,16 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
     exports.Set("scanFiles", Napi::Function::New(env, ScanFiles));
     exports.Set("getRawPreview", Napi::Function::New(env, GetRawPreview));
     exports.Set("getRawPreviewSync", Napi::Function::New(env, GetRawPreviewSync));
+    exports.Set("getWICPreview", Napi::Function::New(env, GetWICPreview));
+    exports.Set("getWICThumbnail", Napi::Function::New(env, GetWICThumbnail));
+    exports.Set("decodeRAWInBackground", Napi::Function::New(env, DecodeRAWInBackground));
+    exports.Set("initWICPreview", Napi::Function::New(env, InitWICPreview));
+    exports.Set("uninitWICPreview", Napi::Function::New(env, UninitWICPreview));
+    exports.Set("setFileList", Napi::Function::New(env, SetFileList));
+    exports.Set("setCurrentFile", Napi::Function::New(env, SetCurrentFile));
+    exports.Set("startPreload", Napi::Function::New(env, StartPreload));
+    exports.Set("stopPreload", Napi::Function::New(env, StopPreload));
+    exports.Set("clearWICCache", Napi::Function::New(env, ClearWICCache));
     return exports;
 }
 

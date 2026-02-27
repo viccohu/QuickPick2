@@ -1999,6 +1999,10 @@
         this.order = [];
       }
       
+      has(key) {
+        return this.cache.has(key);
+      }
+      
       get(key) {
         if (this.cache.has(key)) {
           this.updateOrder(key);
@@ -2377,9 +2381,19 @@
     // 加载图片
     async function loadImages() {
       try {
+        // 清理前端缓存
+        previewCache.clear();
+        
+        // 清理后端缓存
+        await window.electronAPI.image.clearCache();
+        
         // 获取路径
         const jpgInput = document.getElementById('jpgPath').value;
         const rawInput = document.getElementById('rawPath').value;
+        
+        // 先更新路径变量（包括空值）
+        jpgPath = jpgInput;
+        rawPath = rawInput;
 
         // 验证路径
         if (jpgInput) {
@@ -2388,7 +2402,6 @@
             showMessage('错误', 'JPG路径不存在', 'error');
             return;
           }
-          jpgPath = jpgInput;
         }
 
         if (rawInput) {
@@ -2397,7 +2410,6 @@
             showMessage('错误', 'RAW路径不存在', 'error');
             return;
           }
-          rawPath = rawInput;
         }
 
         // 显示进度条
@@ -2596,7 +2608,7 @@
             <i class="ri-check-line"></i>
           </div>
           <div class="thumbnail-image-wrapper">
-            <img class="thumbnail-image lazy" data-src="${thumbnailFile.path}" alt="${thumbnailFile.name}" loading="lazy">
+            <img class="thumbnail-image lazy" data-src="${thumbnailFile.path}" data-index="${index}" alt="${thumbnailFile.name}" loading="lazy">
             <div class="thumbnail-overlay"></div>
           </div>
           <div class="thumbnail-rating ${rejectedImages.has(fileName) ? 'rejected' : ''}">${formatLabels}${ratingStars}</div>
@@ -2699,15 +2711,41 @@
           entries.forEach(entry => {
             if (entry.isIntersecting) {
               const img = entry.target;
+              const index = parseInt(img.dataset.index);
               loadThumbnailImage(img);
+              preloadAdjacentThumbnails(index);
               observer.unobserve(img);
             }
           });
         }, {
-          rootMargin: '100px',
+          rootMargin: '200px',
           threshold: 0.01
         });
       }
+    }
+
+    function preloadAdjacentThumbnails(centerIndex) {
+      if (isNaN(centerIndex)) return;
+      
+      const preloadIndices = [
+        centerIndex - 4, centerIndex - 2,
+        centerIndex + 2, centerIndex + 4
+      ];
+      
+      preloadIndices.forEach(idx => {
+        if (idx >= 0 && idx < filteredGroups.length) {
+          const group = filteredGroups[idx];
+          const file = group.jpg || group.raw;
+          if (file && !thumbnailLRUCache.has(file.path)) {
+            window.electronAPI.image.getThumbnail(file.path, 240).then(result => {
+              if (result && result.data) {
+                const dataUrl = `data:image/jpeg;base64,${result.data}`;
+                thumbnailLRUCache.set(file.path, dataUrl);
+              }
+            }).catch(() => {});
+          }
+        }
+      });
     }
 
     function setupLazyLoading() {
@@ -2784,6 +2822,8 @@
       }
     }
 
+    let previewUpdatedCleanup = null;
+
     function showImage(index) {
       if (index < 0 || index >= filteredGroups.length) return;
 
@@ -2798,10 +2838,14 @@
 
       const loadingId = ++currentLoadingId;
 
+      if (previewUpdatedCleanup) {
+        previewUpdatedCleanup();
+        previewUpdatedCleanup = null;
+      }
+
       const showProgressiveImage = async () => {
         const isRaw = isRawFile(displayFile.path);
 
-        let previewSrc = null;
         let finalSrc = null;
         
         const img = document.createElement('img');
@@ -2817,7 +2861,22 @@
               const previewResult = await window.electronAPI.image.getPreview(displayFile.path);
               if (previewResult.data && loadingId === currentLoadingId) {
                 finalSrc = `data:image/jpeg;base64,${previewResult.data}`;
-                previewCache.set(displayFile.path, finalSrc);
+                
+                if (previewResult.isPreview) {
+                  previewUpdatedCleanup = window.electronAPI.image.onPreviewUpdated((data) => {
+                    if (data.filePath === displayFile.path && data.preview) {
+                      const highResSrc = `data:image/jpeg;base64,${data.preview.data}`;
+                      previewCache.set(displayFile.path, highResSrc);
+                      
+                      const currentImg = document.querySelector('.preview-image');
+                      if (currentImg && currentIndex === index) {
+                        currentImg.src = highResSrc;
+                      }
+                    }
+                  });
+                } else {
+                  previewCache.set(displayFile.path, finalSrc);
+                }
               }
             } catch (e) {
               console.error('获取RAW预览失败:', e);
@@ -2852,7 +2911,6 @@
       showProgressiveImage();
     }
 
-    // 显示无图片提示
     function showNoImage() {
       const previewWrapper = document.getElementById('previewWrapper');
       previewWrapper.innerHTML = '<div class="no-image">无图片可显示</div>';

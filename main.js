@@ -156,6 +156,13 @@ function extractGenericJpeg(buffer) {
 
 async function generateThumbnail(filePath, maxSize = THUMBNAIL_SIZE) {
   try {
+    if (nativeBridge && nativeBridge.getWICThumbnail) {
+      const wicResult = await nativeBridge.getWICThumbnail(filePath, maxSize);
+      if (wicResult && wicResult.data) {
+        return Buffer.from(wicResult.data, 'base64');
+      }
+    }
+    
     const ext = path.extname(filePath).toLowerCase();
     const isRaw = ['.cr2', '.cr3', '.arw', '.nef', '.dng', '.raw'].includes(ext);
     
@@ -325,12 +332,29 @@ function createWindow() {
   });
 }
 
+// 初始化WIC
+if (nativeBridge && nativeBridge.initWICPreview) {
+  nativeBridge.initWICPreview();
+  console.log('[Main] WIC preview initialized');
+}
+
 // 应用就绪后创建窗口
 app.whenReady().then(createWindow);
 
 // 监听所有窗口关闭事件
 app.on('window-all-closed', function () {
+  if (nativeBridge && nativeBridge.stopPreload) {
+    nativeBridge.stopPreload();
+  }
   if (process.platform !== 'darwin') app.quit();
+});
+
+// 监听应用退出
+app.on('will-quit', () => {
+  if (nativeBridge && nativeBridge.uninitWICPreview) {
+    nativeBridge.uninitWICPreview();
+    console.log('[Main] WIC preview uninitialized');
+  }
 });
 
 // 监听应用激活事件
@@ -475,6 +499,9 @@ ipcMain.handle('image:get-thumbnail', async (event, { filePath, maxSize }) => {
   }
 });
 
+const rawPreviewCache = new Map();
+const backgroundDecodeQueue = new Map();
+
 ipcMain.handle('image:get-preview', async (event, { filePath, previewSize }) => {
   try {
     const ext = path.extname(filePath).toLowerCase();
@@ -483,24 +510,82 @@ ipcMain.handle('image:get-preview', async (event, { filePath, previewSize }) => 
     if (isRaw) {
       console.log('[RAW Preview] Processing:', filePath);
       
+      if (rawPreviewCache.has(filePath)) {
+        console.log('[RAW Preview] Using cached preview');
+        return rawPreviewCache.get(filePath);
+      }
+      
+      if (nativeBridge && nativeBridge.getWICPreview) {
+        console.log('[RAW Preview] Calling getWICPreview...');
+        const wicResult = await nativeBridge.getWICPreview(filePath, previewSize || 2000);
+        console.log('[RAW Preview] WIC result:', wicResult ? `success, ${wicResult.width}x${wicResult.height}, embedded=${wicResult.embeddedJpeg}, needsBg=${wicResult.needsBackgroundDecode}` : 'null');
+        
+        if (wicResult && wicResult.data) {
+          const result = { 
+            data: wicResult.data, 
+            isRaw: true,
+            width: wicResult.width,
+            height: wicResult.height,
+            isPreview: wicResult.embeddedJpeg && wicResult.needsBackgroundDecode
+          };
+          
+          if (wicResult.needsBackgroundDecode && !backgroundDecodeQueue.has(filePath)) {
+            console.log('[RAW Preview] Starting background decode for:', filePath);
+            backgroundDecodeQueue.set(filePath, true);
+            
+            nativeBridge.decodeRAWInBackground(filePath, previewSize || 2000).then(bgResult => {
+              if (bgResult && bgResult.data) {
+                const highResResult = {
+                  data: bgResult.data,
+                  isRaw: true,
+                  width: bgResult.width,
+                  height: bgResult.height,
+                  isPreview: false
+                };
+                rawPreviewCache.set(filePath, highResResult);
+                console.log('[RAW Preview] Background decode complete:', bgResult.width, 'x', bgResult.height);
+                
+                event.sender.send('image:preview-updated', { 
+                  filePath, 
+                  preview: highResResult 
+                });
+              }
+              backgroundDecodeQueue.delete(filePath);
+            }).catch(err => {
+              console.error('[RAW Preview] Background decode failed:', err.message);
+              backgroundDecodeQueue.delete(filePath);
+            });
+          } else if (!wicResult.needsBackgroundDecode) {
+            rawPreviewCache.set(filePath, result);
+          }
+          
+          console.log('[RAW Preview] WIC decode success:', wicResult.width, 'x', wicResult.height);
+          return result;
+        }
+      }
+      
       if (nativeBridge) {
         const nativeResult = await nativeBridge.getRawPreview(filePath);
         console.log('[RAW Preview] Native result:', nativeResult ? `${nativeResult.width}x${nativeResult.height}` : 'null');
         if (nativeResult && nativeResult.data) {
-          console.log('[RAW Preview] Using native embedded JPEG');
-          return { 
+          const result = { 
             data: nativeResult.data, 
             isRaw: true,
             width: nativeResult.width,
             height: nativeResult.height
           };
+          rawPreviewCache.set(filePath, result);
+          console.log('[RAW Preview] Using embedded JPEG');
+          return result;
         }
       }
       
       const embeddedJpeg = extractRawPreview(filePath);
       if (embeddedJpeg) {
         console.log('[RAW Preview] Using JS extracted JPEG');
-        return { data: embeddedJpeg.toString('base64'), isRaw: true };
+        const result = { data: embeddedJpeg.toString('base64'), isRaw: true };
+        rawPreviewCache.set(filePath, result);
+        return result;
       }
       
       console.log('[RAW Preview] No preview found');
@@ -513,9 +598,26 @@ ipcMain.handle('image:get-preview', async (event, { filePath, previewSize }) => 
   }
 });
 
+ipcMain.handle('image:set-current-file', async (event, { filePath, fileList }) => {
+  if (nativeBridge) {
+    if (fileList && fileList.length > 0) {
+      nativeBridge.setFileList(fileList);
+      nativeBridge.startPreload();
+    }
+    if (filePath) {
+      nativeBridge.setCurrentFile(filePath);
+    }
+  }
+  return true;
+});
+
 ipcMain.handle('image:clear-cache', () => {
   thumbnailCache.clear();
   cacheAccessOrder = [];
+  rawPreviewCache.clear();
+  if (nativeBridge && nativeBridge.clearWICCache) {
+    nativeBridge.clearWICCache();
+  }
   return true;
 });
 

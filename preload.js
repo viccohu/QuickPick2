@@ -28,10 +28,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     readMetadata: (filePath) => ipcRenderer.invoke('image:read-metadata', filePath),
     getThumbnail: (filePath, maxSize) => ipcRenderer.invoke('image:get-thumbnail', { filePath, maxSize }),
     getPreview: (filePath, previewSize) => ipcRenderer.invoke('image:get-preview', { filePath, previewSize }),
-    clearCache: () => ipcRenderer.invoke('image:clear-cache')
+    clearCache: () => ipcRenderer.invoke('image:clear-cache'),
+    onPreviewUpdated: (callback) => {
+      const listener = (event, data) => callback(data);
+      ipcRenderer.on('image:preview-updated', listener);
+      return () => ipcRenderer.removeListener('image:preview-updated', listener);
+    }
   },
   
-  // Native 模块 API
   native: {
     getStatus: () => ipcRenderer.invoke('native:get-status'),
     generateThumbnails: (paths, options) => ipcRenderer.invoke('native:generate-thumbnails', { paths, options }),
