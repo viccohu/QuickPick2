@@ -2062,7 +2062,7 @@
       initBatchMode();
       initThumbnailResize();
       initViewToggle();
-      initThemeSelector();
+      // initThemeSelector(); 删除
       initFileTooltip();
       initLazyImageObserver();
     });
@@ -3904,46 +3904,64 @@
         // 初始化ratingsData对象
         ratingsData = {};
         
-        // 批量并发读取评级数据，每批处理20个文件
-        const batchSize = 20;
-        const allFiles = [];
+        // 收集所有需要读取评级的文件路径
+        const allFilePaths = [];
+        const fileMap = new Map();
         
-        // 收集所有需要读取评级的文件
         for (const group of imageGroups) {
           if (group.jpg) {
-            allFiles.push({ file: group.jpg, type: 'jpg' });
+            allFilePaths.push(group.jpg.path);
+            fileMap.set(group.jpg.path, group.jpg.name);
           }
           if (group.raw) {
-            allFiles.push({ file: group.raw, type: 'raw' });
+            allFilePaths.push(group.raw.path);
+            fileMap.set(group.raw.path, group.raw.name);
           }
         }
         
-        const totalFiles = allFiles.length;
+        const totalFiles = allFilePaths.length;
+        
+        // 尝试使用 Native 模块批量读取
+        try {
+          const nativeStatus = await window.electronAPI.native.getStatus();
+          
+          // Native 模块的 EXIF 解析可能不完整，暂时使用 JavaScript 实现
+          // if (nativeStatus.nativeAvailable) {
+          //   console.log('[Performance] Using native module for rating loading');
+          //   ...
+          // }
+          
+          // 直接使用 JavaScript 实现
+          console.log('[Performance] Using JavaScript for rating loading (more reliable)');
+        } catch (nativeError) {
+          console.warn('[Performance] Native module check failed:', nativeError);
+        }
+        
+        // JavaScript 批量处理
+        const batchSize = 20;
         let processedFiles = 0;
         
-        // 分批处理
-        for (let i = 0; i < allFiles.length; i += batchSize) {
-          const batch = allFiles.slice(i, i + batchSize);
+        for (let i = 0; i < allFilePaths.length; i += batchSize) {
+          const batch = allFilePaths.slice(i, i + batchSize);
           
-          // 并发读取当前批次的评级
           const ratings = await Promise.all(
-            batch.map(async ({ file }) => {
+            batch.map(async (filePath) => {
               try {
-                const rating = await window.electronAPI.image.readRating(file.path);
-                return { fileName: file.name, rating };
+                const rating = await window.electronAPI.image.readRating(filePath);
+                return { filePath, rating };
               } catch (error) {
-                console.error(`读取文件 ${file.name} 评级失败:`, error);
-                return { fileName: file.name, rating: 0 };
+                return { filePath, rating: 0 };
               }
             })
           );
           
-          // 存储评级数据
-          ratings.forEach(({ fileName, rating }) => {
-            ratingsData[fileName] = { rating, tags: [] };
+          ratings.forEach(({ filePath, rating }) => {
+            const fileName = fileMap.get(filePath);
+            if (fileName) {
+              ratingsData[fileName] = { rating, tags: [] };
+            }
           });
           
-          // 更新进度
           processedFiles += batch.length;
           if (totalFiles > 0) {
             updateProgress(processedFiles, totalFiles, `加载评级数据... ${processedFiles}/${totalFiles}`);

@@ -5,7 +5,9 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "build:native": "node-gyp rebuild --directory=native",
+    "postinstall": "echo 'Native module is optional. Run npm run build:native to enable performance boost.'"
   },
   "keywords": [
     "electron",
@@ -16,7 +18,9 @@
   "license": "ISC",
   "devDependencies": {
     "electron": "^29.4.6",
-    "electron-builder": "^24.0.0"
+    "electron-builder": "^24.0.0",
+    "node-gyp": "^10.0.0",
+    "node-addon-api": "^7.0.0"
   },
   "build": {
     "appId": "com.quickpick2.app",
@@ -35,5 +39,8 @@
     "exiftool-vendored": "^35.10.1",
     "remixicon": "^4.9.1",
     "sharp": "^0.34.5"
+  },
+  "optionalDependencies": {
+    "node-addon-api": "^7.0.0"
   }
 }

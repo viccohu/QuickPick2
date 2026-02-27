@@ -6,6 +6,15 @@ const ExifReader = require('exifreader');
 const { exiftool } = require('exiftool-vendored');
 const sharp = require('sharp');
 
+// 导入 Native 模块
+let nativeBridge = null;
+try {
+    nativeBridge = require('./src/native_bridge');
+    console.log('[Main] Native bridge loaded:', nativeBridge.getStatus());
+} catch (e) {
+    console.warn('[Main] Native bridge not available:', e.message);
+}
+
 const THUMBNAIL_SIZE = 240;
 const THUMBNAIL_QUALITY = 80;
 const MAX_CACHE_ITEMS = 500;
@@ -561,4 +570,70 @@ ipcMain.handle('app:save-state', (event, state) => {
 // 监听读取应用状态请求
 ipcMain.handle('app:load-state', () => {
   return loadAppState();
+});
+
+// ==================== Native 模块 IPC 处理 ====================
+
+// 获取 Native 模块状态
+ipcMain.handle('native:get-status', () => {
+  if (nativeBridge) {
+    return nativeBridge.getStatus();
+  }
+  return { nativeAvailable: false, modules: [] };
+});
+
+// 批量生成缩略图
+ipcMain.handle('native:generate-thumbnails', async (event, { paths, options }) => {
+  if (!nativeBridge) {
+    return { error: 'Native module not available' };
+  }
+  
+  try {
+    const results = await nativeBridge.generateThumbnails(paths, options);
+    // 将 Buffer 转换为 base64
+    const processed = {};
+    for (const [path, data] of Object.entries(results)) {
+      if (data.data) {
+        processed[path] = {
+          data: data.data.toString('base64'),
+          width: data.width,
+          height: data.height
+        };
+      }
+    }
+    return processed;
+  } catch (error) {
+    console.error('[Native] Generate thumbnails error:', error);
+    return { error: error.message };
+  }
+});
+
+// 批量读取 EXIF 评级
+ipcMain.handle('native:read-exif-ratings', async (event, { paths }) => {
+  if (!nativeBridge) {
+    return { error: 'Native module not available' };
+  }
+  
+  try {
+    const results = await nativeBridge.readExifRatings(paths);
+    return results;
+  } catch (error) {
+    console.error('[Native] Read EXIF ratings error:', error);
+    return { error: error.message };
+  }
+});
+
+// 快速文件扫描
+ipcMain.handle('native:scan-files', async (event, { directories, extensions }) => {
+  if (!nativeBridge) {
+    return { error: 'Native module not available' };
+  }
+  
+  try {
+    const files = await nativeBridge.scanFiles(directories, extensions);
+    return files;
+  } catch (error) {
+    console.error('[Native] Scan files error:', error);
+    return { error: error.message };
+  }
 });

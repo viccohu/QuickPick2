@@ -29,5 +29,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getThumbnail: (filePath, maxSize) => ipcRenderer.invoke('image:get-thumbnail', { filePath, maxSize }),
     getPreview: (filePath, previewSize) => ipcRenderer.invoke('image:get-preview', { filePath, previewSize }),
     clearCache: () => ipcRenderer.invoke('image:clear-cache')
+  },
+  
+  // Native 模块 API
+  native: {
+    getStatus: () => ipcRenderer.invoke('native:get-status'),
+    generateThumbnails: (paths, options) => ipcRenderer.invoke('native:generate-thumbnails', { paths, options }),
+    readExifRatings: (paths) => ipcRenderer.invoke('native:read-exif-ratings', { paths }),
+    scanFiles: (directories, extensions) => ipcRenderer.invoke('native:scan-files', { directories, extensions })
   }
 });
