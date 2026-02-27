@@ -60,6 +60,44 @@ class NativeBridge {
         return this.fallbackScanFiles(directories, extensions);
     }
     
+    async getRawPreview(filePath) {
+        if (this.isNativeAvailable && nativeModule.getRawPreview) {
+            try {
+                const result = await nativeModule.getRawPreview(filePath);
+                if (result.success && result.data) {
+                    return {
+                        data: result.data.toString('base64'),
+                        width: result.width,
+                        height: result.height
+                    };
+                }
+            } catch (e) {
+                console.error('[Native] RAW preview extraction failed:', e);
+            }
+        }
+        
+        return null;
+    }
+    
+    getRawPreviewSync(filePath) {
+        if (this.isNativeAvailable && nativeModule.getRawPreviewSync) {
+            try {
+                const result = nativeModule.getRawPreviewSync(filePath);
+                if (result.success && result.data) {
+                    return {
+                        data: result.data.toString('base64'),
+                        width: result.width,
+                        height: result.height
+                    };
+                }
+            } catch (e) {
+                console.error('[Native] RAW preview sync extraction failed:', e);
+            }
+        }
+        
+        return null;
+    }
+    
     processThumbnailResults(results) {
         const processed = {};
         

@@ -3,7 +3,8 @@
     {
       "target_name": "quickpick_native",
       "sources": [
-        "quickpick_native.cc"
+        "quickpick_native.cc",
+        "raw_preview.cc"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")"
@@ -33,7 +34,7 @@
           "cflags_cc": ["-std=c++17", "-fvisibility=hidden"]
         }],
         ["OS=='linux'", {
-          "cflags_cc": ["-std=c++17", "-fvisibility=hidden"]
+          "cflags_cc": ["-std:c++17", "-fvisibility=hidden"]
         }]
       ]
     }

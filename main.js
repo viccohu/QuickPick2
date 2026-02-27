@@ -481,10 +481,29 @@ ipcMain.handle('image:get-preview', async (event, { filePath, previewSize }) => 
     const isRaw = ['.cr2', '.cr3', '.arw', '.nef', '.dng', '.raw'].includes(ext);
     
     if (isRaw) {
-      const embeddedJpeg = getEmbeddedJpegFromRaw(filePath);
+      console.log('[RAW Preview] Processing:', filePath);
+      
+      if (nativeBridge) {
+        const nativeResult = await nativeBridge.getRawPreview(filePath);
+        console.log('[RAW Preview] Native result:', nativeResult ? `${nativeResult.width}x${nativeResult.height}` : 'null');
+        if (nativeResult && nativeResult.data) {
+          console.log('[RAW Preview] Using native embedded JPEG');
+          return { 
+            data: nativeResult.data, 
+            isRaw: true,
+            width: nativeResult.width,
+            height: nativeResult.height
+          };
+        }
+      }
+      
+      const embeddedJpeg = extractRawPreview(filePath);
       if (embeddedJpeg) {
+        console.log('[RAW Preview] Using JS extracted JPEG');
         return { data: embeddedJpeg.toString('base64'), isRaw: true };
       }
+      
+      console.log('[RAW Preview] No preview found');
     }
     
     return { data: null, isRaw };

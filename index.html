@@ -2663,8 +2663,20 @@
         const starRating = parseInt(star.dataset.rating);
         setThumbnailRating(index, starRating);
       } else if (batchMode) {
+        const previousIndex = currentIndex;
         showImage(index);
-        toggleThumbnailSelection(index, e.shiftKey);
+        if (e.shiftKey && previousIndex >= 0 && previousIndex !== index) {
+          const start = Math.min(previousIndex, index);
+          const end = Math.max(previousIndex, index);
+          for (let i = start; i <= end; i++) {
+            selectedThumbnails.add(i);
+          }
+          updateThumbnailCheckboxes();
+          updateBatchCount();
+          updateRatingDisplay(null);
+        } else {
+          toggleThumbnailSelection(index, false);
+        }
       } else {
         showImage(index);
       }
@@ -2789,8 +2801,8 @@
       const showProgressiveImage = async () => {
         const isRaw = isRawFile(displayFile.path);
 
-        let lowQualitySrc = null;
-        let highQualitySrc = null;
+        let previewSrc = null;
+        let finalSrc = null;
         
         const img = document.createElement('img');
         img.className = 'preview-image';
@@ -2798,55 +2810,34 @@
         
         const cachedPreview = previewCache.get(displayFile.path);
         if (cachedPreview) {
-          highQualitySrc = cachedPreview;
+          finalSrc = cachedPreview;
         } else {
           if (isRaw) {
             try {
               const previewResult = await window.electronAPI.image.getPreview(displayFile.path);
               if (previewResult.data && loadingId === currentLoadingId) {
-                lowQualitySrc = `data:image/jpeg;base64,${previewResult.data}`;
+                finalSrc = `data:image/jpeg;base64,${previewResult.data}`;
+                previewCache.set(displayFile.path, finalSrc);
               }
             } catch (e) {
               console.error('获取RAW预览失败:', e);
             }
+          } else {
+            finalSrc = displayFile.path;
+            previewCache.set(displayFile.path, displayFile.path);
           }
-          
-          highQualitySrc = displayFile.path;
         }
         
         if (loadingId !== currentLoadingId) return;
         
-        if (lowQualitySrc) {
-          img.src = lowQualitySrc;
-          img.style.filter = 'blur(2px)';
-          img.style.transition = 'filter 0.3s ease';
+        if (finalSrc) {
+          img.src = finalSrc;
           previewWrapper.appendChild(img);
           
           currentScale = 1;
           offsetX = 0;
           offsetY = 0;
           updateImageTransform(img);
-          
-          const highQualityImg = new Image();
-          highQualityImg.onload = () => {
-            if (loadingId !== currentLoadingId) return;
-            img.src = highQualitySrc;
-            img.style.filter = 'none';
-            previewCache.set(displayFile.path, highQualitySrc);
-          };
-          highQualityImg.src = highQualitySrc;
-        } else {
-          img.src = highQualitySrc || displayFile.path;
-          previewWrapper.appendChild(img);
-          
-          currentScale = 1;
-          offsetX = 0;
-          offsetY = 0;
-          updateImageTransform(img);
-          
-          if (!cachedPreview) {
-            previewCache.set(displayFile.path, displayFile.path);
-          }
         }
         
         updateRatingDisplay(displayFile.path);
@@ -3170,13 +3161,14 @@
     let lastSelectedIndex = -1;
 
     function toggleThumbnailSelection(index, shiftKey = false) {
-      if (shiftKey && lastSelectedIndex >= 0 && lastSelectedIndex !== index) {
-        const start = Math.min(lastSelectedIndex, index);
-        const end = Math.max(lastSelectedIndex, index);
+      if (shiftKey && currentIndex >= 0 && currentIndex !== index) {
+        const start = Math.min(currentIndex, index);
+        const end = Math.max(currentIndex, index);
         
         for (let i = start; i <= end; i++) {
           selectedThumbnails.add(i);
         }
+        lastSelectedIndex = index;
       } else {
         if (selectedThumbnails.has(index)) {
           selectedThumbnails.delete(index);

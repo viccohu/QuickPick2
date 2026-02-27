@@ -456,6 +456,12 @@ private:
 
 // ==================== Exported Functions ====================
 
+Napi::Value GenerateThumbnails(const Napi::CallbackInfo& info);
+Napi::Value ReadExifRatings(const Napi::CallbackInfo& info);
+Napi::Value ScanFiles(const Napi::CallbackInfo& info);
+extern Napi::Value GetRawPreview(const Napi::CallbackInfo& info);
+extern Napi::Value GetRawPreviewSync(const Napi::CallbackInfo& info);
+
 Napi::Value GenerateThumbnails(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     
@@ -545,6 +551,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
     exports.Set("generateThumbnails", Napi::Function::New(env, GenerateThumbnails));
     exports.Set("readExifRatings", Napi::Function::New(env, ReadExifRatings));
     exports.Set("scanFiles", Napi::Function::New(env, ScanFiles));
+    exports.Set("getRawPreview", Napi::Function::New(env, GetRawPreview));
+    exports.Set("getRawPreviewSync", Napi::Function::New(env, GetRawPreviewSync));
     return exports;
 }
 

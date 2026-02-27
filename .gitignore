@@ -1,1 +1,9 @@
 node_modules
+native/build
+*.node
+*.obj
+*.lib
+*.pdb
+*.ipdb
+*.iobj
+*.log
