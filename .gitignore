@@ -11,3 +11,6 @@ native/build
 测试文件
 .vscode
 native/build/**/*
+build
+dist
+test
