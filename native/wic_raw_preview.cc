@@ -698,28 +698,51 @@ protected:
         UINT width, height;
         pFrame->GetSize(&width, &height);
         
-        if (maxSize_ > 0 && (width > (UINT)maxSize_ || height > (UINT)maxSize_)) {
-            IWICBitmapScaler* pScaler = nullptr;
-            hr = g_pWICFactory->CreateBitmapScaler(&pScaler);
-            if (SUCCEEDED(hr)) {
-                double scaleW = (double)maxSize_ / width;
-                double scaleH = (double)maxSize_ / height;
-                double scale = scaleW < scaleH ? scaleW : scaleH;
-                UINT newWidth = (UINT)(width * scale);
-                UINT newHeight = (UINT)(height * scale);
+        // 尝试获取嵌入缩略图（最快路径）
+        IWICBitmapSource* pThumbnail = nullptr;
+        IWICBitmapScaler* pScaler = nullptr;
+        hr = pFrame->GetThumbnail(&pThumbnail);
+        
+        if (SUCCEEDED(hr) && pThumbnail) {
+            UINT tw, th;
+            pThumbnail->GetSize(&tw, &th);
+            
+            // 如果嵌入缩略图够大（80%目标尺寸），直接使用
+            if (tw >= (UINT)maxSize_ * 0.8 || th >= (UINT)maxSize_ * 0.8) {
+                printf("[WIC] Using embedded thumbnail: %u x %u\n", tw, th);
                 
-                hr = pScaler->Initialize(pFrame, newWidth, newHeight, WICBitmapInterpolationModeHighQualityCubic);
+                hr = g_pWICFactory->CreateBitmapFromSource(pThumbnail, WICBitmapCacheOnDemand, &pBitmap);
                 if (SUCCEEDED(hr)) {
-                    hr = g_pWICFactory->CreateBitmapFromSource(pScaler, WICBitmapCacheOnDemand, &pBitmap);
-                    width_ = newWidth;
-                    height_ = newHeight;
+                    width_ = tw;
+                    height_ = th;
+                    EncodeBitmapToJPEG(pBitmap, data_);
                 }
-                pScaler->Release();
+                pThumbnail->Release();
+                pFrame->Release();
+                pDecoder->Release();
+                return;
             }
-        } else {
-            hr = g_pWICFactory->CreateBitmapFromSource(pFrame, WICBitmapCacheOnDemand, &pBitmap);
-            width_ = width;
-            height_ = height;
+            pThumbnail->Release();
+        }
+        
+        // 计算缩放比例
+        double scaleW = (double)maxSize_ / width;
+        double scaleH = (double)maxSize_ / height;
+        double scale = scaleW < scaleH ? scaleW : scaleH;
+        UINT newWidth = (UINT)(width * scale);
+        UINT newHeight = (UINT)(height * scale);
+        
+        // 使用Fant快速缩放算法
+        hr = g_pWICFactory->CreateBitmapScaler(&pScaler);
+        if (SUCCEEDED(hr)) {
+            // Fant算法 - 最快的缩放模式
+            hr = pScaler->Initialize(pFrame, newWidth, newHeight, WICBitmapInterpolationModeFant);
+            if (SUCCEEDED(hr)) {
+                hr = g_pWICFactory->CreateBitmapFromSource(pScaler, WICBitmapCacheOnDemand, &pBitmap);
+                width_ = newWidth;
+                height_ = newHeight;
+            }
+            pScaler->Release();
         }
         
         pFrame->Release();

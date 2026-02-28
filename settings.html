@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>设置 - QuickPick2</title>
+  <link rel="stylesheet" href="assets/settings.css">
+</head>
+<body>
+  <div id="settingsPanel" class="settings-panel">
+    <div class="settings-header">
+      <h2>⚙️ 设置</h2>
+      <button class="settings-close-btn" onclick="closeSettings()">✕</button>
+    </div>
+    
+    <div class="settings-content">
+      <!-- 导出设置 -->
+      <div class="settings-section">
+        <h3>📁 导出设置</h3>
+        
+        <div class="setting-item">
+          <label>导出模式</label>
+          <select id="exportMode">
+            <option value="jpg">仅JPG</option>
+            <option value="raw">仅RAW</option>
+            <option value="jpg&raw">JPG & RAW</option>
+          </select>
+        </div>
+        
+        <div class="setting-item">
+          <label>评级导出RAW阈值</label>
+          <div class="rating-selector">
+            <label>
+              <input type="radio" name="rating" value="3" id="r3">
+              <span>3星及以上</span>
+            </label>
+            <label>
+              <input type="radio" name="rating" value="4" id="r4">
+              <span>4星及以上</span>
+            </label>
+            <label>
+              <input type="radio" name="rating" value="5" id="r5" checked>
+              <span>5星及以上</span>
+            </label>
+            <label>
+              <input type="radio" name="rating" value="6" id="r6">
+              <span>6星及以上</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <label>JPG文件夹名称</label>
+          <input type="text" id="folderNameJPG" value="JPG" placeholder="JPG">
+        </div>
+        
+        <div class="setting-item">
+          <label>RAW文件夹名称</label>
+          <input type="text" id="folderNameRAW" value="raw" placeholder="raw">
+        </div>
+        
+        <div class="setting-item">
+          <label>文件冲突处理</label>
+          <select id="fileConflictAction">
+            <option value="ask">询问</option>
+            <option value="overwrite">覆盖</option>
+            <option value="rename">重命名</option>
+            <option value="skip">跳过</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- 界面设置 -->
+      <div class="settings-section">
+        <h3>🎨 界面设置</h3>
+        
+        <div class="setting-item">
+          <label>主题模式</label>
+          <div class="theme-selector">
+            <button class="theme-btn" data-mode="light" onclick="setTheme('light')">
+              <span class="theme-icon">☀️</span>
+              <span>白天</span>
+            </button>
+            <button class="theme-btn active" data-mode="dark" onclick="setTheme('dark')">
+              <span class="theme-icon">🌙️</span>
+              <span>黑夜</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <label>动画效果</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableAnimation" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        
+        <div class="setting-item">
+          <label>放大镜倍数</label>
+          <input type="range" id="zoomLevel" min="1.0" max="5.0" step="0.5" value="2.5">
+          <span class="zoom-value">2.5x</span>
+        </div>
+      </div>
+      
+      <!-- 路径设置 -->
+      <div class="settings-section">
+        <h3>📂 路径设置</h3>
+        
+        <div class="setting-item">
+          <label>记住最近打开路径</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="rememberLastPath" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        
+        <div class="path-input-group">
+          <div class="path-input-item">
+            <label>默认JPG路径</label>
+            <input type="text" id="defaultJPGPath" placeholder="输入默认JPG路径">
+            <button onclick="selectJPGPath()">...</button>
+          </div>
+          <div class="path-input-item">
+            <label>默认RAW路径</label>
+            <input type="text" id="defaultRAWPath" placeholder="输入默认RAW路径">
+            <button onclick="selectRAWPath()">...</button>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <label>启动时自动加载</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="autoLoadOnStartup">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <!-- 性能设置 -->
+      <div class="settings-section">
+        <h3>⚡ 性能设置</h3>
+        
+        <div class="setting-item">
+          <label>缩略图质量</label>
+          <input type="range" id="thumbnailQuality" min="50" max="100" step="5" value="80">
+          <span class="quality-value">80%</span>
+        </div>
+        
+        <div class="setting-item">
+          <label>缓存大小</label>
+          <input type="range" id="cacheSize" min="100" max="1000" step="50" value="500">
+          <span class="cache-value">500项</span>
+        </div>
+        
+        <div class="setting-item">
+          <label>JPG处理器</label>
+          <select id="jpgProcessor">
+            <option value="wic" selected>WIC（推荐）</option>
+            <option value="sharp">Sharp</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <div class="settings-footer">
+      <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+      <button class="btn btn-secondary" onclick="closeSettings()">取消</button>
+    </div>
+  </div>
+  
+  <script src="settings.js"></script>
+</body>
+</html>

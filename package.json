@@ -35,6 +35,7 @@
     }
   },
   "dependencies": {
+    "electron-store": "^11.0.2",
     "exifreader": "^4.36.2",
     "exiftool-vendored": "^35.10.1",
     "lightdrift-libraw": "^1.0.0-alpha.6",

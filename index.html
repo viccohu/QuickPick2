@@ -104,22 +104,24 @@
     }
 
     .title-bar-help {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       border: none;
-      border-radius: 4px;
+      border-radius: 50%;
       font-size: 12px;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.1);
       color: #888;
       transition: all 0.2s;
+      margin-left: 8px;
+      vertical-align: middle;
     }
 
     .title-bar-help:hover {
-      background: rgba(102, 126, 234, 0.15);
+      background: rgba(102, 126, 234, 0.3);
       color: #667eea;
     }
 
@@ -1167,6 +1169,303 @@
       cursor: not-allowed;
     }
 
+    /* 设置面板 */
+    .settings-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #1a1a1a;
+      z-index: 9998;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .settings-panel.visible {
+      display: flex;
+    }
+
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: #252525;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .settings-header h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #e0e0e0;
+    }
+
+    .settings-close-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: #e0e0e0;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .settings-close-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .settings-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .settings-section {
+      margin-bottom: 24px;
+      background: #252525;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .settings-section h3 {
+      margin: 0 0 16px 0;
+      font-size: 14px;
+      color: #e0e0e0;
+      font-weight: 600;
+    }
+
+    .setting-item {
+      margin-bottom: 16px;
+    }
+
+    .setting-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .setting-item > label {
+      display: block;
+      margin-bottom: 8px;
+      color: #a0a0a0;
+      font-size: 13px;
+    }
+
+    .setting-item select,
+    .setting-item input[type="text"] {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      font-size: 13px;
+    }
+
+    .setting-item select:focus,
+    .setting-item input[type="text"]:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    .setting-item.disabled,
+    .setting-item.disabled input {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .toggle-switch input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .toggle-slider {
+      display: block;
+      width: 44px;
+      height: 24px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      transition: background 0.2s;
+      position: relative;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: #6366f1;
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+    }
+
+    .setting-item input[type="range"] {
+      width: calc(100% - 60px);
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+      -webkit-appearance: none;
+      margin-right: 10px;
+    }
+
+    .setting-item input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #6366f1;
+      cursor: pointer;
+    }
+
+    .zoom-value,
+    .quality-value,
+    .cache-value {
+      display: inline-block;
+      width: 50px;
+      text-align: right;
+      color: #e0e0e0;
+      font-size: 13px;
+    }
+
+    .theme-selector {
+      display: flex;
+      gap: 10px;
+    }
+
+    .theme-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+
+    .theme-btn:hover {
+      background: #252525;
+    }
+
+    .theme-btn.active {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .theme-icon {
+      font-size: 16px;
+    }
+
+    .rating-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .rating-selector > label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #e0e0e0;
+      transition: all 0.2s;
+    }
+
+    .rating-selector input[type="radio"] {
+      display: none;
+    }
+
+    .rating-selector input[type="radio"]:checked + label,
+    .rating-selector > label:has(input:checked) {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .settings-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 20px;
+      background: #252525;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .settings-footer button {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #6366f1;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e0e0e0;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .cache-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .cache-info span {
+      color: #a0a0a0;
+      font-size: 13px;
+    }
+
+    [data-theme="light"] .cache-info span {
+      color: #666666;
+    }
+
     /* 删除确认对话框 */
     .delete-modal {
       position: fixed;
@@ -1541,6 +1840,423 @@
       background: #0a0a12;
     }
 
+    [data-theme="light"] body,
+    [data-theme="light"] .container {
+      background: #f5f5f5;
+    }
+
+    [data-theme="light"] .title-bar,
+    [data-theme="light"] .path-container,
+    [data-theme="light"] .preview-container,
+    [data-theme="light"] .thumbnail-container,
+    [data-theme="light"] .toolbar {
+      background: rgba(255, 255, 255, 0.98);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .path-input {
+      background: #ffffff;
+      color: #333333;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .thumbnail-item {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .thumbnail-name {
+      color: #333333;
+    }
+
+    [data-theme="light"] .thumbnail-rating {
+      color: #333333;
+      background: #f0f0f0;
+    }
+
+    [data-theme="light"] .thumbnail-star {
+      color: #ccc;
+    }
+
+    [data-theme="light"] .thumbnail-star.active {
+      color: #f59e0b;
+    }
+
+    [data-theme="light"] .star {
+      color: #ccc;
+    }
+
+    [data-theme="light"] .star.active {
+      color: #f59e0b;
+    }
+
+    [data-theme="light"] .filter-btn {
+      color: #666666;
+    }
+
+    [data-theme="light"] .filter-btn.active {
+      color: white;
+    }
+
+    [data-theme="light"] .title {
+      color: #333333;
+    }
+
+    [data-theme="light"] .stats-item {
+      color: #666666;
+    }
+
+    [data-theme="light"] .settings-panel {
+      background: #f5f5f5;
+    }
+
+    [data-theme="light"] .settings-header,
+    [data-theme="light"] .settings-section,
+    [data-theme="light"] .settings-footer {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .settings-header h2,
+    [data-theme="light"] .settings-section h3,
+    [data-theme="light"] .setting-item > label {
+      color: #333333;
+    }
+
+    [data-theme="light"] .setting-item select,
+    [data-theme="light"] .setting-item input[type="text"] {
+      background: #f5f5f5;
+      color: #333333;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .theme-btn {
+      background: #f5f5f5;
+      color: #333333;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .settings-close-btn {
+      color: #333333;
+    }
+
+    [data-theme="light"] .zoom-value,
+    [data-theme="light"] .quality-value,
+    [data-theme="light"] .cache-value {
+      color: #333333;
+    }
+
+    [data-theme="light"] .rating-selector > label {
+      color: #333333;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .control-button {
+      color: #333333;
+    }
+
+    [data-theme="light"] .control-button:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .exif-panel {
+      background: rgba(255, 255, 255, 0.98);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .exif-panel-header {
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .exif-panel-header h3 {
+      color: #333333;
+    }
+
+    [data-theme="light"] .exif-item label {
+      color: #666666;
+    }
+
+    [data-theme="light"] .exif-item span {
+      color: #333333;
+    }
+
+    [data-theme="light"] .help-modal-content {
+      background: #ffffff;
+    }
+
+    [data-theme="light"] .help-modal-header {
+      background: #f5f5f5;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .help-modal-header h3 {
+      color: #333333;
+    }
+
+    [data-theme="light"] .help-modal-body {
+      color: #333333;
+    }
+
+    [data-theme="light"] .help-item {
+      color: #333333;
+    }
+
+    [data-theme="light"] .delete-modal-content {
+      background: #ffffff;
+    }
+
+    [data-theme="light"] .delete-modal-header h3 {
+      color: #333333;
+    }
+
+    [data-theme="light"] .delete-modal-body {
+      color: #333333;
+    }
+
+    [data-theme="light"] .delete-modal-footer {
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .progress-text {
+      color: #333333;
+    }
+
+    [data-theme="light"] .header-progress-text {
+      color: #333333;
+    }
+
+    [data-theme="light"] .thumbnail-checkbox {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(0, 0, 0, 0.2);
+    }
+
+    [data-theme="light"] .thumbnail-checkbox.checked {
+      background: #6366f1;
+      border-color: #6366f1;
+    }
+
+    [data-theme="light"] .thumbnail-checkbox i {
+      color: #333333;
+    }
+
+    [data-theme="light"] .thumbnail-checkbox.checked i {
+      color: white;
+    }
+
+    [data-theme="light"] .format-label {
+      background: rgba(0, 0, 0, 0.1);
+      color: #333333;
+    }
+
+    [data-theme="light"] .format-label.raw {
+      background: rgba(99, 102, 241, 0.2);
+      color: #6366f1;
+    }
+
+    [data-theme="light"] .magnifier {
+      border-color: rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    [data-theme="light"] .magnifier-toggle {
+      background: rgba(0, 0, 0, 0.1);
+      color: #333333;
+    }
+
+    [data-theme="light"] .magnifier-toggle:hover {
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    [data-theme="light"] .magnifier-toggle.active {
+      background: #6366f1;
+      color: white;
+    }
+
+    [data-theme="light"] .batch-toggle {
+      background: rgba(0, 0, 0, 0.1);
+      color: #333333;
+    }
+
+    [data-theme="light"] .batch-toggle:hover {
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    [data-theme="light"] .batch-toggle.active {
+      background: #6366f1;
+      color: white;
+    }
+
+    [data-theme="light"] .export-button {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    }
+
+    [data-theme="light"] .delete-button {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+
+    [data-theme="light"] .delete-button:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    [data-theme="light"] .path-button {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    }
+
+    [data-theme="light"] .progress-bar {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    }
+
+    [data-theme="light"] .header-progress-bar {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    }
+
+    [data-theme="light"] .preview-container {
+      background: rgba(245, 245, 245, 0.98);
+    }
+
+    [data-theme="light"] .rating-container {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(0, 0, 0, 0.1);
+      color: #333333;
+    }
+
+    [data-theme="light"] .rating-container .star {
+      color: #ccc;
+    }
+
+    [data-theme="light"] .rating-container .star.active {
+      color: #f59e0b;
+    }
+
+    [data-theme="light"] .preview-info {
+      background: rgba(255, 255, 255, 0.98);
+      border-color: rgba(0, 0, 0, 0.1);
+      color: #333333;
+    }
+
+    [data-theme="light"] .preview-nav {
+      background: rgba(255, 255, 255, 0.9);
+      color: #333333;
+    }
+
+    [data-theme="light"] .preview-nav button {
+      color: #333333;
+    }
+
+    [data-theme="light"] .preview-nav button:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .preview-placeholder {
+      color: #666666;
+    }
+
+    [data-theme="light"] .preview-image-info {
+      color: #333333;
+    }
+
+    [data-theme="light"] .thumbnail-container {
+      background: rgba(245, 245, 245, 0.98);
+    }
+
+    [data-theme="light"] .thumbnail-overlay {
+      background: rgba(255, 255, 255, 0.8);
+      color: #333333;
+    }
+
+    [data-theme="light"] .thumbnail-status {
+      color: #333333;
+    }
+
+    [data-theme="light"] .toolbar {
+      background: rgba(255, 255, 255, 0.98);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .batch-info-inline {
+      background: rgba(99, 102, 241, 0.1);
+      color: #6366f1;
+    }
+
+    [data-theme="light"] .magnifier {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.2);
+    }
+
+    [data-theme="light"] .empty-state {
+      color: #666666;
+    }
+
+    [data-theme="light"] .loading-overlay {
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    [data-theme="light"] .loading-spinner {
+      border-color: rgba(0, 0, 0, 0.1);
+      border-top-color: #6366f1;
+    }
+
+    [data-theme="light"] .title-bar-stats-item {
+      color: #333333;
+    }
+
+    [data-theme="light"] .title-bar-stats-item.clickable:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="light"] .title-bar-stats-item.clickable.active {
+      background: rgba(99, 102, 241, 0.1);
+      color: #6366f1;
+    }
+
+    [data-theme="light"] .title-bar-help {
+      background: rgba(0, 0, 0, 0.05);
+      color: #666666;
+    }
+
+    [data-theme="light"] .title-bar-help:hover {
+      background: rgba(99, 102, 241, 0.15);
+      color: #6366f1;
+    }
+
+    [data-theme="light"] .path-browse {
+      background: rgba(0, 0, 0, 0.05);
+      color: #333333;
+    }
+
+    [data-theme="light"] .path-browse:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .rating-stats {
+      color: #666666;
+    }
+
+    [data-theme="light"] .rating-stats-item {
+      color: #666666;
+    }
+
+    [data-theme="light"] .rating-stats-item i {
+      color: #999999;
+    }
+
+    [data-theme="light"] .setting-item input[type="range"] {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .setting-item input[type="range"]::-webkit-slider-thumb {
+      background: #6366f1;
+    }
+
+    [data-theme="light"] .toggle-slider {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .toggle-switch input:checked + .toggle-slider {
+      background: #6366f1;
+    }
+
     [data-theme="midnight"] .title-bar,
     [data-theme="midnight"] .path-container,
     [data-theme="midnight"] .preview-container,
@@ -1639,6 +2355,7 @@
       <div class="window-title">
         <i class="ri-image-line"></i>
         QuickPick - 图片查看管理器
+        <button class="title-bar-help" id="helpButton" title="快捷键帮助"><i class="ri-question-line"></i></button>
       </div>
       <div class="title-bar-center">
         <div class="title-bar-stats" id="titleBarStats">
@@ -1650,9 +2367,9 @@
           <span class="title-bar-stats-divider"></span>
           <span class="title-bar-stats-item clickable active" id="statsTotal" title="总计"><i class="ri-gallery-line"></i><span>0</span></span>
         </div>
-        <button class="title-bar-help" id="helpButton" title="快捷键帮助"><i class="ri-keyboard-line"></i></button>
       </div>
       <div class="window-controls">
+        <button class="control-button settings-toggle" id="settingsToggle" title="设置"><i class="ri-settings-3-line"></i></button>
         <button class="control-button minimize"><i class="ri-subtract-line"></i></button>
         <button class="control-button maximize"><i class="ri-checkbox-blank-line"></i></button>
         <button class="control-button close"><i class="ri-close-line"></i></button>
@@ -1822,6 +2539,174 @@
       </div>
     </div>
 
+    <!-- 设置面板 -->
+    <div class="settings-panel" id="settingsPanel">
+      <div class="settings-header">
+        <h2>⚙️ 设置</h2>
+        <button class="settings-close-btn" onclick="closeSettings()">✕</button>
+      </div>
+      
+      <div class="settings-content">
+        <!-- 导出设置 -->
+        <div class="settings-section">
+          <h3>📁 导出设置</h3>
+          
+          <div class="setting-item">
+            <label>导出模式</label>
+            <select id="exportMode">
+              <option value="jpg">仅JPG</option>
+              <option value="raw">仅RAW</option>
+              <option value="jpg&raw">JPG & RAW</option>
+            </select>
+          </div>
+          
+          <div class="setting-item">
+            <label>评级导出RAW阈值</label>
+            <div class="rating-selector">
+              <label>
+                <input type="radio" name="exportRating" value="2" id="r2">
+                <span>2星及以上</span>
+              </label>
+              <label>
+                <input type="radio" name="exportRating" value="3" id="r3">
+                <span>3星及以上</span>
+              </label>
+              <label>
+                <input type="radio" name="exportRating" value="4" id="r4">
+                <span>4星及以上</span>
+              </label>
+              <label>
+                <input type="radio" name="exportRating" value="5" id="r5" checked>
+                <span>5星及以上</span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <label>JPG文件夹名称</label>
+            <input type="text" id="folderNameJPG" value="JPG" placeholder="JPG">
+          </div>
+          
+          <div class="setting-item">
+            <label>RAW文件夹名称</label>
+            <input type="text" id="folderNameRAW" value="raw" placeholder="raw">
+          </div>
+          
+          <div class="setting-item">
+            <label>文件冲突处理</label>
+            <select id="fileConflictAction">
+              <option value="ask">询问</option>
+              <option value="overwrite">覆盖</option>
+              <option value="rename">重命名</option>
+              <option value="skip">跳过</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- 界面设置 -->
+        <div class="settings-section">
+          <h3>🎨 界面设置</h3>
+          
+          <div class="setting-item">
+            <label>主题模式</label>
+            <div class="theme-selector">
+              <button class="theme-btn" data-mode="light" onclick="setTheme('light')">
+                <span class="theme-icon">☀️</span>
+                <span>白天</span>
+              </button>
+              <button class="theme-btn active" data-mode="dark" onclick="setTheme('dark')">
+                <span class="theme-icon">🌙</span>
+                <span>黑夜</span>
+              </button>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <label>动画效果</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="enableAnimation" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          
+          <div class="setting-item">
+            <label>放大镜倍数</label>
+            <input type="range" id="zoomLevel" min="1.0" max="5.0" step="0.5" value="2.5">
+            <span class="zoom-value">2.5x</span>
+          </div>
+        </div>
+        
+        <!-- 路径设置 -->
+        <div class="settings-section">
+          <h3>📂 路径设置</h3>
+          
+          <div class="setting-item">
+            <label>记住最近打开路径</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="rememberLastPath" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          
+          <div class="setting-item path-input-item">
+            <label>默认JPG路径</label>
+            <input type="text" id="defaultJPGPath" placeholder="输入默认JPG路径">
+          </div>
+          
+          <div class="setting-item path-input-item">
+            <label>默认RAW路径</label>
+            <input type="text" id="defaultRAWPath" placeholder="输入默认RAW路径">
+          </div>
+          
+          <div class="setting-item">
+            <label>启动时自动加载</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="autoLoadOnStartup">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        
+        <!-- 性能设置 -->
+        <div class="settings-section">
+          <h3>⚡ 性能设置</h3>
+          
+          <div class="setting-item">
+            <label>缩略图质量</label>
+            <input type="range" id="thumbnailQuality" min="50" max="100" step="5" value="80">
+            <span class="quality-value">80%</span>
+          </div>
+          
+          <div class="setting-item">
+            <label>缓存大小</label>
+            <input type="range" id="cacheSize" min="100" max="1000" step="50" value="500">
+            <span class="cache-value">500项</span>
+          </div>
+          
+          <div class="setting-item">
+            <label>JPG处理器</label>
+            <select id="jpgProcessor">
+              <option value="wic" selected>WIC（推荐）</option>
+              <option value="sharp">Sharp</option>
+            </select>
+          </div>
+          
+          <div class="setting-item">
+            <label>缓存管理</label>
+            <div class="cache-info">
+              <span id="cacheInfo">缓存: 0 项</span>
+              <button class="btn btn-secondary" onclick="clearAllCache()" style="margin-left: 10px; padding: 6px 12px; font-size: 12px;">清理缓存</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="settings-footer">
+        <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+        <button class="btn btn-secondary" onclick="closeSettings()">取消</button>
+      </div>
+    </div>
+
     <!-- EXIF信息面板 -->
     <div class="exif-panel" id="exifPanel">
       <div class="exif-panel-header">
@@ -1988,7 +2873,8 @@
     let currentLoadingId = 0;
 
     const MAX_IMAGE_CACHE = 100;
-    const MAX_THUMBNAIL_CACHE = 200;
+    let MAX_THUMBNAIL_CACHE = 500;
+    let thumbnailLRUCache = null;
 
 
 
@@ -2043,11 +2929,16 @@
       
       get size() {
         return this.cache.size;
-      }
     }
-    
-    const previewCache = new LRUCache(MAX_IMAGE_CACHE);
-    const thumbnailLRUCache = new LRUCache(MAX_THUMBNAIL_CACHE);
+  }
+  
+  const previewCache = new LRUCache(MAX_IMAGE_CACHE);
+  
+  async function initThumbnailCache() {
+    const settings = await window.electronAPI.settings.get();
+    MAX_THUMBNAIL_CACHE = settings.cacheSize || 500;
+    thumbnailLRUCache = new LRUCache(MAX_THUMBNAIL_CACHE);
+  }
 
     let currentView = 'grid';
     let currentTheme = 'default';
@@ -2058,7 +2949,31 @@
     let lazyImageObserver = null;
     let fileMetadataCache = new Map();
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      const settings = await window.electronAPI.settings.get();
+      
+      applyTheme(settings.themeMode || 'dark');
+      
+      if (settings.enableAnimation === false) {
+        document.body.classList.add('no-animation');
+      }
+      
+      if (settings.rememberLastPath) {
+        if (settings.lastJPGPath) {
+          document.getElementById('jpgPath').value = settings.lastJPGPath;
+        }
+        if (settings.lastRAWPath) {
+          document.getElementById('rawPath').value = settings.lastRAWPath;
+        }
+      } else {
+        if (settings.defaultJPGPath) {
+          document.getElementById('jpgPath').value = settings.defaultJPGPath;
+        }
+        if (settings.defaultRAWPath) {
+          document.getElementById('rawPath').value = settings.defaultRAWPath;
+        }
+      }
+      
       initEventListeners();
       loadRatingsData();
       initMagnifier();
@@ -2066,9 +2981,17 @@
       initBatchMode();
       initThumbnailResize();
       initViewToggle();
-      // initThemeSelector(); 删除
       initFileTooltip();
       initLazyImageObserver();
+      await initThumbnailCache();
+      
+      if (settings.autoLoadOnStartup) {
+        const jpgPath = document.getElementById('jpgPath').value;
+        const rawPath = document.getElementById('rawPath').value;
+        if (jpgPath || rawPath) {
+          loadImages();
+        }
+      }
     });
 
     // 初始化事件监听器
@@ -2464,6 +3387,13 @@
 
         // 应用筛选
         applyFilter();
+        
+        // 保存当前路径
+        const settings = await window.electronAPI.settings.get();
+        if (settings.rememberLastPath) {
+          await window.electronAPI.settings.setOne('lastJPGPath', jpgPath);
+          await window.electronAPI.settings.setOne('lastRAWPath', rawPath);
+        }
 
         // 显示第一张图片
         if (filteredGroups.length > 0) {
@@ -2859,7 +3789,7 @@
           if (isRaw) {
             try {
               const previewResult = await window.electronAPI.image.getPreview(displayFile.path);
-              if (previewResult.data && loadingId === currentLoadingId) {
+              if (previewResult && previewResult.data && loadingId === currentLoadingId) {
                 finalSrc = `data:image/jpeg;base64,${previewResult.data}`;
                 
                 if (previewResult.isPreview) {
@@ -3038,11 +3968,14 @@
     }
 
     let magnifierEnabled = false;
+    let magnifierZoom = 2.5;
     const magnifier = document.getElementById('magnifier');
     const magnifierImage = document.getElementById('magnifierImage');
-    const magnifierZoom = 2.5;
 
-    function initMagnifier() {
+    async function initMagnifier() {
+      const settings = await window.electronAPI.settings.get();
+      magnifierZoom = settings.zoomLevel || 2.5;
+      
       const previewWrapper = document.getElementById('previewWrapper');
       
       previewWrapper.addEventListener('mousemove', (e) => {
@@ -3881,7 +4814,8 @@
     // 导出文件
     async function exportFiles() {
       try {
-        // 选择导出目录
+        const settings = await window.electronAPI.settings.get();
+        
         const exportPath = await window.electronAPI.openDirectoryDialog({
           title: '选择导出目录',
           defaultPath: ''
@@ -3889,7 +4823,6 @@
 
         if (!exportPath) return;
 
-        // 统计需要导出的文件
         const filesToExport = [];
         for (const group of imageGroups) {
           const file = group.jpg || group.raw;
@@ -3906,33 +4839,43 @@
           return;
         }
 
-        // 显示进度指示器
         showProgress('导出文件...');
+        
+        const jpgFolder = settings.exportFolderNameJPG || 'JPG';
+        const rawFolder = settings.exportFolderNameRAW || 'raw';
+        const ratingThreshold = settings.exportRatingThreshold || 5;
+        const exportMode = settings.exportMode || 'jpg&raw';
+        const conflictAction = settings.fileConflictAction || 'ask';
         
         let jpgCount = 0;
         let rawCount = 0;
         let processedCount = 0;
 
-        // 遍历需要导出的文件
         for (const { group, rating } of filesToExport) {
-          // 4星及以下：仅导出JPG
-          if (rating <= 4 && group.jpg) {
-            const targetPath = joinPath(exportPath, 'JPG_Export', group.jpg.name);
-            await window.electronAPI.fs.copyFile(group.jpg.path, targetPath);
+          let exportJPG = false;
+          let exportRAW = false;
+          
+          if (exportMode === 'jpg') {
+            exportJPG = true;
+          } else if (exportMode === 'raw') {
+            exportRAW = group.raw !== null;
+          } else {
+            exportJPG = true;
+            if (rating >= ratingThreshold && group.raw) {
+              exportRAW = true;
+            }
+          }
+          
+          if (exportJPG && group.jpg) {
+            const targetPath = joinPath(exportPath, jpgFolder, group.jpg.name);
+            await copyFileWithConflict(group.jpg.path, targetPath, conflictAction);
             jpgCount++;
           }
-          // 5星：导出JPG和RAW
-          else if (rating === 5) {
-            if (group.jpg) {
-              const targetPath = joinPath(exportPath, 'JPG_Export', group.jpg.name);
-              await window.electronAPI.fs.copyFile(group.jpg.path, targetPath);
-              jpgCount++;
-            }
-            if (group.raw) {
-              const targetPath = joinPath(exportPath, 'RAW_Export', group.raw.name);
-              await window.electronAPI.fs.copyFile(group.raw.path, targetPath);
-              rawCount++;
-            }
+          
+          if (exportRAW && group.raw) {
+            const targetPath = joinPath(exportPath, rawFolder, group.raw.name);
+            await copyFileWithConflict(group.raw.path, targetPath, conflictAction);
+            rawCount++;
           }
           
           processedCount++;
@@ -3945,6 +4888,55 @@
         console.error('导出文件失败:', error);
         hideProgress();
         showMessage('错误', '导出文件失败', 'error');
+      }
+    }
+
+    async function copyFileWithConflict(sourcePath, targetPath, conflictAction) {
+      const exists = await window.electronAPI.fs.existsSync(targetPath);
+      
+      if (!exists) {
+        await window.electronAPI.fs.copyFile(sourcePath, targetPath);
+        return;
+      }
+      
+      if (conflictAction === 'skip') {
+        return;
+      }
+      
+      if (conflictAction === 'overwrite') {
+        await window.electronAPI.fs.unlinkSync(targetPath);
+        await window.electronAPI.fs.copyFile(sourcePath, targetPath);
+        return;
+      }
+      
+      if (conflictAction === 'rename') {
+        let counter = 1;
+        let newPath = targetPath;
+        const ext = targetPath.substring(targetPath.lastIndexOf('.'));
+        const base = targetPath.substring(0, targetPath.lastIndexOf('.'));
+        
+        while (await window.electronAPI.fs.existsSync(newPath)) {
+          newPath = `${base}_${counter}${ext}`;
+          counter++;
+        }
+        await window.electronAPI.fs.copyFile(sourcePath, newPath);
+        return;
+      }
+      
+      if (conflictAction === 'ask') {
+        const result = await window.electronAPI.showMessageBox({
+          type: 'question',
+          buttons: ['覆盖', '重命名', '跳过'],
+          defaultId: 0,
+          title: '文件已存在',
+          message: `文件已存在：${targetPath}`
+        });
+        
+        if (result === 0) {
+          await copyFileWithConflict(sourcePath, targetPath, 'overwrite');
+        } else if (result === 1) {
+          await copyFileWithConflict(sourcePath, targetPath, 'rename');
+        }
       }
     }
 
@@ -4025,10 +5017,12 @@
 
 
     function showMessage(title, message, type) {
+      const validTypes = ['none', 'info', 'error', 'question', 'warning'];
+      const dialogType = validTypes.includes(type) ? type : 'info';
       window.electronAPI.showMessageBox({
         title: title,
         message: message,
-        type: type
+        type: dialogType
       });
     }
 
@@ -4281,7 +5275,7 @@
     function setFormatFilter(filter) {
       formatFilter = filter;
       
-      document.querySelectorAll('.title-bar-stats-row:first-child .title-bar-stats-item').forEach(item => {
+      document.querySelectorAll('#titleBarStats .title-bar-stats-item').forEach(item => {
         item.classList.remove('active');
       });
       
@@ -4324,6 +5318,176 @@
       const title = document.getElementById('headerProgressText').textContent.split(' - ')[0];
       document.getElementById('headerProgressText').textContent = `${title} - ${progressText} (${percentage}%)`;
     }
+
+    // ==================== 设置面板相关 ====================
+    let currentSettings = null;
+
+    async function openSettings() {
+      currentSettings = await window.electronAPI.settings.get();
+      
+      document.getElementById('exportMode').value = currentSettings.exportMode || 'jpg&raw';
+      document.getElementById('folderNameJPG').value = currentSettings.exportFolderNameJPG || 'JPG';
+      document.getElementById('folderNameRAW').value = currentSettings.exportFolderNameRAW || 'raw';
+      document.getElementById('fileConflictAction').value = currentSettings.fileConflictAction || 'ask';
+      
+      const ratingRadios = document.querySelectorAll('input[name="exportRating"]');
+      ratingRadios.forEach(radio => {
+        radio.checked = parseInt(radio.value) === (currentSettings.exportRatingThreshold || 5);
+      });
+      
+      document.getElementById('enableAnimation').checked = currentSettings.enableAnimation !== false;
+      document.getElementById('zoomLevel').value = currentSettings.zoomLevel || 2.5;
+      document.querySelector('.zoom-value').textContent = (currentSettings.zoomLevel || 2.5) + 'x';
+      
+      const themeBtns = document.querySelectorAll('.theme-btn');
+      themeBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === (currentSettings.themeMode || 'dark'));
+      });
+      
+      document.getElementById('rememberLastPath').checked = currentSettings.rememberLastPath !== false;
+      document.getElementById('defaultJPGPath').value = currentSettings.defaultJPGPath || '';
+      document.getElementById('defaultRAWPath').value = currentSettings.defaultRAWPath || '';
+      document.getElementById('autoLoadOnStartup').checked = currentSettings.autoLoadOnStartup === true;
+      
+      updatePathInputState();
+      
+      document.getElementById('thumbnailQuality').value = currentSettings.thumbnailQuality || 80;
+      document.querySelector('.quality-value').textContent = (currentSettings.thumbnailQuality || 80) + '%';
+      document.getElementById('cacheSize').value = currentSettings.cacheSize || 500;
+      document.querySelector('.cache-value').textContent = (currentSettings.cacheSize || 500) + '项';
+      document.getElementById('jpgProcessor').value = currentSettings.jpgProcessor || 'wic';
+      
+      updateCacheInfo();
+      
+      document.getElementById('settingsPanel').classList.add('visible');
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsPanel').classList.remove('visible');
+    }
+
+    function updatePathInputState() {
+      const rememberLastPath = document.getElementById('rememberLastPath').checked;
+      const defaultJPGPathInput = document.getElementById('defaultJPGPath');
+      const defaultRAWPathInput = document.getElementById('defaultRAWPath');
+      
+      if (rememberLastPath) {
+        defaultJPGPathInput.disabled = true;
+        defaultRAWPathInput.disabled = true;
+        defaultJPGPathInput.parentElement.classList.add('disabled');
+        defaultRAWPathInput.parentElement.classList.add('disabled');
+      } else {
+        defaultJPGPathInput.disabled = false;
+        defaultRAWPathInput.disabled = false;
+        defaultJPGPathInput.parentElement.classList.remove('disabled');
+        defaultRAWPathInput.parentElement.classList.remove('disabled');
+      }
+    }
+
+    async function saveSettings() {
+      const currentSettings = await window.electronAPI.settings.get();
+      const ratingRadio = document.querySelector('input[name="exportRating"]:checked');
+      const settings = {
+        ...currentSettings,
+        exportMode: document.getElementById('exportMode').value,
+        exportRatingThreshold: ratingRadio ? parseInt(ratingRadio.value) : 5,
+        exportFolderNameJPG: document.getElementById('folderNameJPG').value || 'JPG',
+        exportFolderNameRAW: document.getElementById('folderNameRAW').value || 'raw',
+        fileConflictAction: document.getElementById('fileConflictAction').value,
+        themeMode: document.querySelector('.theme-btn.active')?.dataset.mode || 'dark',
+        enableAnimation: document.getElementById('enableAnimation').checked,
+        zoomLevel: parseFloat(document.getElementById('zoomLevel').value),
+        rememberLastPath: document.getElementById('rememberLastPath').checked,
+        defaultJPGPath: document.getElementById('defaultJPGPath').value,
+        defaultRAWPath: document.getElementById('defaultRAWPath').value,
+        autoLoadOnStartup: document.getElementById('autoLoadOnStartup').checked,
+        thumbnailQuality: parseInt(document.getElementById('thumbnailQuality').value),
+        cacheSize: parseInt(document.getElementById('cacheSize').value),
+        jpgProcessor: document.getElementById('jpgProcessor').value
+      };
+      
+      await window.electronAPI.settings.set(settings);
+      
+      applyTheme(settings.themeMode);
+      
+      magnifierZoom = settings.zoomLevel;
+      
+      if (settings.enableAnimation) {
+        document.body.classList.remove('no-animation');
+      } else {
+        document.body.classList.add('no-animation');
+      }
+      
+      closeSettings();
+      
+      showMessage('成功', '设置已保存', 'success');
+    }
+
+    async function clearAllCache() {
+      const result = await window.electronAPI.showMessageBox({
+        type: 'question',
+        buttons: ['确定', '取消'],
+        defaultId: 0,
+        title: '清理缓存',
+        message: '确定要清理所有缓存吗？'
+      });
+      
+      if (result === 0) {
+        if (thumbnailLRUCache) {
+          thumbnailLRUCache.clear();
+        }
+        if (previewCache) {
+          previewCache.clear();
+        }
+        
+        if (nativeBridge && nativeBridge.clearWICCache) {
+          nativeBridge.clearWICCache();
+        }
+        
+        updateCacheInfo();
+        showMessage('成功', '缓存已清理', 'success');
+      }
+    }
+
+    function updateCacheInfo() {
+      const thumbnailCount = thumbnailLRUCache ? thumbnailLRUCache.size : 0;
+      const previewCount = previewCache ? previewCache.size : 0;
+      document.getElementById('cacheInfo').textContent = `缩略图缓存: ${thumbnailCount} 项 | 预览缓存: ${previewCount} 项`;
+    }
+
+    function setTheme(mode) {
+      const themeBtns = document.querySelectorAll('.theme-btn');
+      themeBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+    }
+
+    function applyTheme(mode) {
+      const root = document.documentElement;
+      if (mode === 'dark') {
+        root.setAttribute('data-theme', 'dark');
+      } else if (mode === 'light') {
+        root.setAttribute('data-theme', 'light');
+      } else {
+        root.setAttribute('data-theme', mode);
+      }
+    }
+
+    document.getElementById('rememberLastPath').addEventListener('change', updatePathInputState);
+
+    document.getElementById('zoomLevel').addEventListener('input', function() {
+      document.querySelector('.zoom-value').textContent = this.value + 'x';
+    });
+
+    document.getElementById('thumbnailQuality').addEventListener('input', function() {
+      document.querySelector('.quality-value').textContent = this.value + '%';
+    });
+
+    document.getElementById('cacheSize').addEventListener('input', function() {
+      document.querySelector('.cache-value').textContent = this.value + '项';
+    });
+
+    document.getElementById('settingsToggle').addEventListener('click', openSettings);
 
 
   </script>

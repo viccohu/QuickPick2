@@ -41,5 +41,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     generateThumbnails: (paths, options) => ipcRenderer.invoke('native:generate-thumbnails', { paths, options }),
     readExifRatings: (paths) => ipcRenderer.invoke('native:read-exif-ratings', { paths }),
     scanFiles: (directories, extensions) => ipcRenderer.invoke('native:scan-files', { directories, extensions })
+  },
+  
+  settings: {
+    get: () => ipcRenderer.invoke('settings:get'),
+    getOne: (key) => ipcRenderer.invoke('settings:get-one', key),
+    set: (settings) => ipcRenderer.invoke('settings:set', settings),
+    setOne: (key, value) => ipcRenderer.invoke('settings:set-one', { key, value }),
+    reset: () => ipcRenderer.invoke('settings:reset')
   }
 });

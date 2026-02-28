@@ -156,7 +156,11 @@ function extractGenericJpeg(buffer) {
 
 async function generateThumbnail(filePath, maxSize = THUMBNAIL_SIZE) {
   try {
-    if (nativeBridge && nativeBridge.getWICThumbnail) {
+    const settings = getSettings();
+    const jpgProcessor = settings.jpgProcessor || 'wic';
+    const thumbnailQuality = settings.thumbnailQuality || 80;
+    
+    if (jpgProcessor === 'wic' && nativeBridge && nativeBridge.getWICThumbnail) {
       const wicResult = await nativeBridge.getWICThumbnail(filePath, maxSize);
       if (wicResult && wicResult.data) {
         return Buffer.from(wicResult.data, 'base64');
@@ -184,7 +188,7 @@ async function generateThumbnail(filePath, maxSize = THUMBNAIL_SIZE) {
           fastShrinkOnLoad: true
         })
         .jpeg({
-          quality: THUMBNAIL_QUALITY,
+          quality: thumbnailQuality,
           mozjpeg: true,
           chromaSubsampling: '4:2:0'
         })
@@ -757,4 +761,30 @@ ipcMain.handle('native:scan-files', async (event, { directories, extensions }) =
     console.error('[Native] Scan files error:', error);
     return { error: error.message };
   }
+});
+
+// ==================== 设置模块 IPC 处理 ====================
+const { getSettings, getSetting, setSetting, setSettings, resetSettings } = require('./src/settings');
+
+ipcMain.handle('settings:get', () => {
+  return getSettings();
+});
+
+ipcMain.handle('settings:get-one', (event, key) => {
+  return getSetting(key);
+});
+
+ipcMain.handle('settings:set', (event, settings) => {
+  setSettings(settings);
+  return true;
+});
+
+ipcMain.handle('settings:set-one', (event, { key, value }) => {
+  setSetting(key, value);
+  return true;
+});
+
+ipcMain.handle('settings:reset', () => {
+  resetSettings();
+  return true;
 });
