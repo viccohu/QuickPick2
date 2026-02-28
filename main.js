@@ -6,6 +6,49 @@ const ExifReader = require('exifreader');
 const { exiftool } = require('exiftool-vendored');
 const sharp = require('sharp');
 
+// 创建日志目录
+const logDir = path.join(app.getPath('userData'), 'logs');
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
+
+// 日志文件路径
+const logFile = path.join(logDir, `app-${new Date().toISOString().slice(0, 10)}.log`);
+
+// 日志记录函数
+function log(message, level = 'info') {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
+  console.log(logMessage);
+  fs.appendFileSync(logFile, logMessage, 'utf8');
+}
+
+// 全局未捕获异常处理
+process.on('uncaughtException', (error) => {
+  log(`未捕获的异常: ${error.message}\n${error.stack}`, 'error');
+  dialog.showMessageBox({
+    type: 'error',
+    title: '应用崩溃',
+    message: '应用遇到未预期的错误',
+    detail: `错误信息: ${error.message}\n\n请查看日志文件获取详细信息: ${logFile}`,
+    buttons: ['确定']
+  }).then(() => {
+    app.quit();
+  });
+});
+
+// 全局未处理的 Promise 拒绝处理
+process.on('unhandledRejection', (reason, promise) => {
+  log(`未处理的 Promise 拒绝: ${reason}\n${promise}`, 'error');
+  dialog.showMessageBox({
+    type: 'error',
+    title: '应用错误',
+    message: '应用遇到未处理的操作',
+    detail: `错误信息: ${reason}\n\n请查看日志文件获取详细信息: ${logFile}`,
+    buttons: ['确定']
+  });
+});
+
 // 导入 Native 模块
 let nativeBridge = null;
 try {
@@ -305,45 +348,106 @@ let mainWindow;
 
 // 创建主窗口
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 800,
-    minHeight: 600,
-    frame: false,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true
-    },
-    title: 'QuickPick2 - 图片查看管理器'
-  });
+  try {
+    log('开始创建主窗口');
+    mainWindow = new BrowserWindow({
+      width: 1200,
+      height: 800,
+      minWidth: 800,
+      minHeight: 600,
+      frame: false,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        nodeIntegration: false,
+        contextIsolation: true
+      },
+      title: 'QuickPick2 - 图片查看管理器'
+    });
 
-  // 加载主页面
-  mainWindow.loadFile('index.html');
+    // 加载主页面
+    mainWindow.loadFile('index.html').then(() => {
+      log('主页面加载成功');
+    }).catch((error) => {
+      log(`加载主页面失败: ${error.message}`, 'error');
+    });
 
-  // 允许使用F12开启开发者工具
-  mainWindow.webContents.on('before-input-event', (event, input) => {
-    if (input.key === 'F12') {
-      mainWindow.webContents.toggleDevTools();
-      event.preventDefault();
-    }
-  });
+    // 允许使用F12开启开发者工具
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+      if (input.key === 'F12') {
+        mainWindow.webContents.toggleDevTools();
+        event.preventDefault();
+      }
+    });
 
-  // 监听窗口关闭事件
-  mainWindow.on('closed', function () {
-    mainWindow = null;
-  });
+    // 监听窗口关闭事件
+    mainWindow.on('closed', function () {
+      log('主窗口关闭');
+      mainWindow = null;
+    });
+
+    // 监听渲染进程崩溃
+    mainWindow.webContents.on('crashed', (event, killed) => {
+      log(`渲染进程崩溃: ${killed ? '被杀死' : '意外崩溃'}`, 'error');
+      dialog.showMessageBox({
+        type: 'error',
+        title: '渲染进程崩溃',
+        message: '应用界面进程崩溃',
+        detail: '渲染进程已崩溃，应用将重新启动',
+        buttons: ['确定']
+      }).then(() => {
+        createWindow();
+      });
+    });
+
+    // 监听白屏事件
+    mainWindow.webContents.on('render-process-gone', (event, details) => {
+      log(`渲染进程消失: ${details.reason}`, 'error');
+      dialog.showMessageBox({
+        type: 'error',
+        title: '渲染进程错误',
+        message: '应用界面进程出现错误',
+        detail: `原因: ${details.reason}\n\n请查看日志文件获取详细信息: ${logFile}`,
+        buttons: ['确定']
+      }).then(() => {
+        createWindow();
+      });
+    });
+
+    log('主窗口创建成功');
+  } catch (error) {
+    log(`创建窗口失败: ${error.message}\n${error.stack}`, 'error');
+    throw error;
+  }
 }
 
 // 初始化WIC
 if (nativeBridge && nativeBridge.initWICPreview) {
-  nativeBridge.initWICPreview();
-  console.log('[Main] WIC preview initialized');
+  try {
+    nativeBridge.initWICPreview();
+    log('[Main] WIC preview initialized');
+  } catch (error) {
+    log(`初始化WIC失败: ${error.message}`, 'error');
+  }
 }
 
 // 应用就绪后创建窗口
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  try {
+    log('应用就绪，创建主窗口');
+    createWindow();
+  } catch (error) {
+    log(`创建窗口失败: ${error.message}\n${error.stack}`, 'error');
+    dialog.showMessageBox({
+      type: 'error',
+      title: '启动失败',
+      message: '应用启动失败',
+      detail: `错误信息: ${error.message}\n\n请查看日志文件获取详细信息: ${logFile}`,
+      buttons: ['确定']
+    }).then(() => {
+      app.quit();
+    });
+  }
+});
 
 // 监听所有窗口关闭事件
 app.on('window-all-closed', function () {
@@ -392,10 +496,19 @@ ipcMain.handle('show-message-box', async (event, options) => {
 // 监听文件系统操作
 ipcMain.handle('fs:readdir', async (event, dirPath) => {
   return new Promise((resolve, reject) => {
-    fs.readdir(dirPath, (err, files) => {
-      if (err) reject(err);
-      else resolve(files);
-    });
+    try {
+      fs.readdir(dirPath, (err, files) => {
+        if (err) {
+          console.error('读取目录失败:', err);
+          reject(err);
+        } else {
+          resolve(files);
+        }
+      });
+    } catch (error) {
+      console.error('读取目录异常:', error);
+      reject(error);
+    }
   });
 });
 
@@ -424,11 +537,21 @@ ipcMain.handle('fs:copyFile', async (event, { source, target }) => {
 });
 
 ipcMain.handle('fs:existsSync', (event, path) => {
-  return fs.existsSync(path);
+  try {
+    return fs.existsSync(path);
+  } catch (error) {
+    console.error('检查路径存在失败:', error);
+    return false;
+  }
 });
 
 ipcMain.handle('fs:mkdirSync', (event, { path, options }) => {
-  return fs.mkdirSync(path, options);
+  try {
+    return fs.mkdirSync(path, options);
+  } catch (error) {
+    console.error('创建目录失败:', error);
+    throw error;
+  }
 });
 
 ipcMain.handle('fs:deleteFile', async (event, filePath) => {
@@ -445,8 +568,13 @@ ipcMain.handle('fs:deleteFile', async (event, filePath) => {
 });
 
 // 监听图片评级操作
-ipcMain.handle('image:read-rating', (event, filePath) => {
-  return getImageRating(filePath);
+ipcMain.handle('image:read-rating', async (event, filePath) => {
+  try {
+    return await getImageRating(filePath);
+  } catch (error) {
+    log(`读取图片评级失败: ${error.message}`, 'error');
+    return 0;
+  }
 });
 
 ipcMain.handle('image:save-rating', (event, { filePath, rating }) => {
@@ -530,38 +658,10 @@ ipcMain.handle('image:get-preview', async (event, { filePath, previewSize }) => 
             isRaw: true,
             width: wicResult.width,
             height: wicResult.height,
-            isPreview: wicResult.embeddedJpeg && wicResult.needsBackgroundDecode
+            isPreview: false
           };
           
-          if (wicResult.needsBackgroundDecode && !backgroundDecodeQueue.has(filePath)) {
-            console.log('[RAW Preview] Starting background decode for:', filePath);
-            backgroundDecodeQueue.set(filePath, true);
-            
-            nativeBridge.decodeRAWInBackground(filePath, previewSize || 2000).then(bgResult => {
-              if (bgResult && bgResult.data) {
-                const highResResult = {
-                  data: bgResult.data,
-                  isRaw: true,
-                  width: bgResult.width,
-                  height: bgResult.height,
-                  isPreview: false
-                };
-                rawPreviewCache.set(filePath, highResResult);
-                console.log('[RAW Preview] Background decode complete:', bgResult.width, 'x', bgResult.height);
-                
-                event.sender.send('image:preview-updated', { 
-                  filePath, 
-                  preview: highResResult 
-                });
-              }
-              backgroundDecodeQueue.delete(filePath);
-            }).catch(err => {
-              console.error('[RAW Preview] Background decode failed:', err.message);
-              backgroundDecodeQueue.delete(filePath);
-            });
-          } else if (!wicResult.needsBackgroundDecode) {
-            rawPreviewCache.set(filePath, result);
-          }
+          rawPreviewCache.set(filePath, result);
           
           console.log('[RAW Preview] WIC decode success:', wicResult.width, 'x', wicResult.height);
           return result;

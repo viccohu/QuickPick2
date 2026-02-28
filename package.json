@@ -17,46 +17,26 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "css-loader": "^7.1.4",
     "electron": "^29.4.6",
     "electron-builder": "^24.0.0",
-    "html-webpack-plugin": "^5.6.6",
-    "mini-css-extract-plugin": "^2.10.0",
     "node-addon-api": "^7.0.0",
-    "node-gyp": "^10.0.0",
-    "style-loader": "^4.0.0",
-    "ts-loader": "^9.5.4",
-    "typescript": "^5.9.3",
-    "webpack": "^5.105.3",
-    "webpack-cli": "^6.0.1",
-    "webpack-dev-server": "^5.2.3"
+    "node-gyp": "^10.0.0"
   },
   "build": {
     "appId": "com.quickpick2.app",
     "productName": "QuickPick2",
-    "win": {
-      "target": "nsis",
-      "icon": "icon.ico"
+    "directories": {
+      "output": "build"
     },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+    "win": {
+      "target": "portable"
     }
   },
   "dependencies": {
-    "@fluentui/react-components": "^9.73.1",
-    "@fluentui/react-icons": "^2.0.316",
     "electron-store": "^11.0.2",
     "exifreader": "^4.36.2",
     "exiftool-vendored": "^35.10.1",
-    "lightdrift-libraw": "^1.0.0-alpha.6",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "remixicon": "^4.9.1",
-    "sharp": "^0.34.5",
-    "zustand": "^5.0.11"
+    "sharp": "^0.34.5"
   },
   "optionalDependencies": {
     "node-addon-api": "^7.0.0"

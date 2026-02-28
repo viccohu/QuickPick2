@@ -3350,6 +3350,7 @@
     // 扫描文件
     async function scanFiles() {
       try {
+        console.log('开始扫描文件，jpgPath:', jpgPath, 'rawPath:', rawPath);
         const jpgFiles = [];
         const rawFiles = [];
 
@@ -3358,54 +3359,72 @@
 
         // 扫描JPG文件
         if (jpgPath) {
+          console.log('开始扫描JPG文件:', jpgPath);
           const files = await window.electronAPI.fs.readdir(jpgPath);
+          console.log('JPG文件数量:', files.length);
           jpgFiles.push(...files.filter(file => {
             const ext = file.toLowerCase();
             return ext.endsWith('.jpg') || ext.endsWith('.jpeg');
           }).map(file => ({ path: joinPath(jpgPath, file), name: file, type: 'jpg' })));
+          console.log('筛选后的JPG文件数量:', jpgFiles.length);
         }
 
         updateProgress(1, 4, '扫描RAW文件...');
 
         // 扫描RAW文件
         if (rawPath) {
+          console.log('开始扫描RAW文件:', rawPath);
           const files = await window.electronAPI.fs.readdir(rawPath);
+          console.log('RAW文件数量:', files.length);
           rawFiles.push(...files.filter(file => {
             return isRawFile(file);
           }).map(file => ({ path: joinPath(rawPath, file), name: file, type: 'raw' })));
+          console.log('筛选后的RAW文件数量:', rawFiles.length);
         }
 
         updateProgress(2, 4, '生成图片组...');
 
         // 生成图片组
+        console.log('开始生成图片组，JPG:', jpgFiles.length, 'RAW:', rawFiles.length);
         generateImageGroups(jpgFiles, rawFiles);
+        console.log('图片组数量:', imageGroups.length);
 
         updateProgress(3, 4, '加载评级数据...');
 
         // 加载星级数据
+        console.log('开始加载评级数据');
         await loadRatingsData();
+        console.log('评级数据加载完成');
 
         // 应用筛选
+        console.log('开始应用筛选');
         applyFilter();
+        console.log('筛选完成，过滤后图片组数量:', filteredGroups.length);
         
         // 保存当前路径
+        console.log('开始保存当前路径');
         const settings = await window.electronAPI.settings.get();
         if (settings.rememberLastPath) {
           await window.electronAPI.settings.setOne('lastJPGPath', jpgPath);
           await window.electronAPI.settings.setOne('lastRAWPath', rawPath);
         }
+        console.log('路径保存完成');
 
         // 显示第一张图片
+        console.log('开始显示第一张图片');
         if (filteredGroups.length > 0) {
           showImage(0);
         } else {
           showNoImage();
         }
+        console.log('图片显示完成');
 
         // 隐藏进度条
         hideProgress();
+        console.log('扫描文件完成');
       } catch (error) {
         console.error('扫描文件失败:', error);
+        console.error('错误堆栈:', error.stack);
         hideProgress();
         showMessage('错误', '扫描文件失败', 'error');
       }
@@ -3413,33 +3432,68 @@
 
     // 生成图片组
     function generateImageGroups(jpgFiles, rawFiles) {
-      const groups = {};
+      try {
+        console.log('开始生成图片组，JPG文件数:', jpgFiles.length, 'RAW文件数:', rawFiles.length);
+        const groups = {};
 
-      // 添加JPG文件
-      jpgFiles.forEach(file => {
-        const prefix = getFilePrefix(file.name);
-        if (!groups[prefix]) {
-          groups[prefix] = { jpg: null, raw: null };
-        }
-        groups[prefix].jpg = file;
-      });
+        // 添加JPG文件
+        console.log('开始添加JPG文件到组');
+        jpgFiles.forEach((file, index) => {
+          try {
+            const prefix = getFilePrefix(file.name);
+            if (!groups[prefix]) {
+              groups[prefix] = { jpg: null, raw: null };
+            }
+            groups[prefix].jpg = file;
+            if (index % 100 === 0) {
+              console.log('已处理JPG文件:', index + 1, '/', jpgFiles.length);
+            }
+          } catch (error) {
+            console.error('处理JPG文件失败:', file.name, error);
+          }
+        });
+        console.log('JPG文件添加完成，组数量:', Object.keys(groups).length);
 
-      // 添加RAW文件
-      rawFiles.forEach(file => {
-        const prefix = getFilePrefix(file.name);
-        if (!groups[prefix]) {
-          groups[prefix] = { jpg: null, raw: null };
-        }
-        groups[prefix].raw = file;
-      });
+        // 添加RAW文件
+        console.log('开始添加RAW文件到组');
+        rawFiles.forEach((file, index) => {
+          try {
+            const prefix = getFilePrefix(file.name);
+            if (!groups[prefix]) {
+              groups[prefix] = { jpg: null, raw: null };
+            }
+            groups[prefix].raw = file;
+            if (index % 100 === 0) {
+              console.log('已处理RAW文件:', index + 1, '/', rawFiles.length);
+            }
+          } catch (error) {
+            console.error('处理RAW文件失败:', file.name, error);
+          }
+        });
+        console.log('RAW文件添加完成，组数量:', Object.keys(groups).length);
 
-      // 转换为数组并排序
-      imageGroups = Object.values(groups).filter(group => group.jpg || group.raw);
-      imageGroups.sort((a, b) => {
-        const nameA = (a.jpg || a.raw).name;
-        const nameB = (b.jpg || b.raw).name;
-        return nameA.localeCompare(nameB);
-      });
+        // 转换为数组并排序
+        console.log('开始转换为数组并排序');
+        const allGroups = Object.values(groups);
+        console.log('转换前组数量:', allGroups.length);
+        imageGroups = allGroups.filter(group => group.jpg || group.raw);
+        console.log('过滤后组数量:', imageGroups.length);
+        imageGroups.sort((a, b) => {
+          try {
+            const nameA = (a.jpg || a.raw).name;
+            const nameB = (b.jpg || b.raw).name;
+            return nameA.localeCompare(nameB);
+          } catch (error) {
+            console.error('排序失败:', error);
+            return 0;
+          }
+        });
+        console.log('排序完成，最终组数量:', imageGroups.length);
+      } catch (error) {
+        console.error('生成图片组失败:', error);
+        console.error('错误堆栈:', error.stack);
+        imageGroups = [];
+      }
     }
 
     // 获取文件前缀
@@ -3794,14 +3848,20 @@
                 
                 if (previewResult.isPreview) {
                   previewUpdatedCleanup = window.electronAPI.image.onPreviewUpdated((data) => {
-                    if (data.filePath === displayFile.path && data.preview) {
-                      const highResSrc = `data:image/jpeg;base64,${data.preview.data}`;
-                      previewCache.set(displayFile.path, highResSrc);
-                      
-                      const currentImg = document.querySelector('.preview-image');
-                      if (currentImg && currentIndex === index) {
-                        currentImg.src = highResSrc;
-                      }
+                    if (data.filePath === displayFile.path) {
+                      window.electronAPI.image.getPreview(displayFile.path).then(updatedPreview => {
+                        if (updatedPreview && updatedPreview.data) {
+                          const highResSrc = `data:image/jpeg;base64,${updatedPreview.data}`;
+                          previewCache.set(displayFile.path, highResSrc);
+                          
+                          const currentImg = document.querySelector('.preview-image');
+                          if (currentImg && currentIndex === index) {
+                            currentImg.src = highResSrc;
+                          }
+                        }
+                      }).catch(e => {
+                        console.error('获取更新后的预览失败:', e);
+                      });
                     }
                   });
                 } else {

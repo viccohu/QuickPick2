@@ -10,8 +10,27 @@
 #include <thread>
 #include <atomic>
 #include <condition_variable>
+#include <algorithm>
 
 #pragma comment(lib, "windowscodecs.lib")
+
+static bool IsRawExtension(const std::wstring& ext) {
+    static const std::vector<std::wstring> rawExts = {
+        L".cr2", L".cr3", L".nef", L".arw", L".dng", L".raf",
+        L".orf", L".rw2", L".pef", L".srw", L".x3f", L".raw"
+    };
+    std::wstring lowerExt = ext;
+    std::transform(lowerExt.begin(), lowerExt.end(), lowerExt.begin(), ::towlower);
+    return std::find(rawExts.begin(), rawExts.end(), lowerExt) != rawExts.end();
+}
+
+static std::wstring GetExtension(const std::wstring& path) {
+    size_t pos = path.find_last_of(L'.');
+    if (pos != std::wstring::npos) {
+        return path.substr(pos);
+    }
+    return L"";
+}
 
 static IWICImagingFactory* g_pWICFactory = nullptr;
 static bool g_wicInitialized = false;
@@ -444,6 +463,11 @@ static void PreloadWorker() {
             for (int i : preload) {
                 if (i >= 0 && i < (int)g_fileList.size()) {
                     std::wstring path = g_fileList[i];
+                    
+                    if (!IsRawExtension(GetExtension(path))) {
+                        continue;
+                    }
+                    
                     CacheItem item;
                     if (!GetCachedPreview(path, item)) {
                         IWICBitmap* pBitmap = DecodeRAW(path, 2000);
@@ -489,71 +513,77 @@ protected:
         printf("[WIC] WICPreviewWorker::Execute - filePath: %s, maxSize: %d, background: %d\n", 
                filePath_.c_str(), maxSize_, backgroundDecode_);
         
-        std::wstring widePath = Utf8ToWide(filePath_);
-        
-        if (!backgroundDecode_ && GetCachedPreview(widePath, cacheItem_)) {
-            fromCache_ = true;
-            printf("[WIC] Found in cache\n");
-            return;
-        }
-        
-        if (!g_wicInitialized) {
-            printf("[WIC] WIC not initialized, initializing...\n");
-            if (!InitWIC()) {
-                error_ = "WIC not initialized";
-                printf("[WIC] WIC init failed\n");
+        try {
+            std::wstring widePath = Utf8ToWide(filePath_);
+            
+            if (!backgroundDecode_ && GetCachedPreview(widePath, cacheItem_)) {
+                fromCache_ = true;
+                printf("[WIC] Found in cache\n");
                 return;
             }
-        }
-        
-        if (!backgroundDecode_) {
-            printf("[WIC] Trying to extract embedded JPEG...\n");
-            int embedWidth = 0, embedHeight = 0;
-            if (ExtractEmbeddedJPEG(widePath, cacheItem_.data, embedWidth, embedHeight)) {
-                cacheItem_.width = embedWidth;
-                cacheItem_.height = embedHeight;
-                embeddedJpegUsed_ = true;
-                
-                if (embedWidth >= maxSize_ && embedHeight >= maxSize_) {
-                    printf("[WIC] Embedded JPEG is high resolution (%d x %d), using it\n", embedWidth, embedHeight);
-                    AddToCache(widePath, cacheItem_);
+            
+            if (!g_wicInitialized) {
+                printf("[WIC] WIC not initialized, initializing...\n");
+                if (!InitWIC()) {
+                    error_ = "WIC not initialized";
+                    printf("[WIC] WIC init failed\n");
                     return;
                 }
-                printf("[WIC] Embedded JPEG is low resolution (%d x %d), need background decode\n", embedWidth, embedHeight);
-                needsBackgroundDecode_ = true;
+            }
+            
+            if (!backgroundDecode_) {
+                printf("[WIC] Trying to extract embedded JPEG...\n");
+                int embedWidth = 0, embedHeight = 0;
+                std::vector<uint8_t> embeddedData;
+                if (ExtractEmbeddedJPEG(widePath, embeddedData, embedWidth, embedHeight)) {
+                    if (embedWidth >= maxSize_ || embedHeight >= maxSize_) {
+                        printf("[WIC] Embedded JPEG is high resolution (%d x %d), using it\n", embedWidth, embedHeight);
+                        cacheItem_.data = embeddedData;
+                        cacheItem_.width = embedWidth;
+                        cacheItem_.height = embedHeight;
+                        embeddedJpegUsed_ = true;
+                        AddToCache(widePath, cacheItem_);
+                        return;
+                    }
+                    printf("[WIC] Embedded JPEG is low resolution (%d x %d), will decode RAW instead\n", embedWidth, embedHeight);
+                }
+            }
+            
+            printf("[WIC] Calling DecodeRAW...\n");
+            IWICBitmap* pBitmap = DecodeRAW(widePath, maxSize_);
+            if (!pBitmap) {
+                if (!cacheItem_.data.empty()) {
+                    printf("[WIC] DecodeRAW failed, using low-res embedded JPEG\n");
+                    return;
+                }
+                error_ = "Failed to decode RAW";
+                printf("[WIC] DecodeRAW returned null\n");
+                return;
+            }
+            
+            UINT w, h;
+            pBitmap->GetSize(&w, &h);
+            printf("[WIC] Bitmap size: %u x %u\n", w, h);
+            
+            printf("[WIC] Encoding to JPEG...\n");
+            if (EncodeBitmapToJPEG(pBitmap, cacheItem_.data)) {
+                cacheItem_.width = w;
+                cacheItem_.height = h;
                 AddToCache(widePath, cacheItem_);
-                return;
+                printf("[WIC] JPEG encode success, size: %zu bytes\n", cacheItem_.data.size());
+            } else {
+                error_ = "Failed to encode JPEG";
+                printf("[WIC] JPEG encode failed\n");
             }
+            
+            pBitmap->Release();
+        } catch (const std::exception& e) {
+            error_ = std::string("Exception: ") + e.what();
+            printf("[WIC] Exception: %s\n", e.what());
+        } catch (...) {
+            error_ = "Unknown exception";
+            printf("[WIC] Unknown exception\n");
         }
-        
-        printf("[WIC] Calling DecodeRAW...\n");
-        IWICBitmap* pBitmap = DecodeRAW(widePath, maxSize_);
-        if (!pBitmap) {
-            if (!cacheItem_.data.empty()) {
-                printf("[WIC] DecodeRAW failed, using low-res embedded JPEG\n");
-                return;
-            }
-            error_ = "Failed to decode RAW";
-            printf("[WIC] DecodeRAW returned null\n");
-            return;
-        }
-        
-        UINT w, h;
-        pBitmap->GetSize(&w, &h);
-        printf("[WIC] Bitmap size: %u x %u\n", w, h);
-        
-        printf("[WIC] Encoding to JPEG...\n");
-        if (EncodeBitmapToJPEG(pBitmap, cacheItem_.data)) {
-            cacheItem_.width = w;
-            cacheItem_.height = h;
-            AddToCache(widePath, cacheItem_);
-            printf("[WIC] JPEG encode success, size: %zu bytes\n", cacheItem_.data.size());
-        } else {
-            error_ = "Failed to encode JPEG";
-            printf("[WIC] JPEG encode failed\n");
-        }
-        
-        pBitmap->Release();
     }
     
     void OnOK() {
@@ -848,7 +878,7 @@ Napi::Value UninitWICPreview(const Napi::CallbackInfo& info) {
 Napi::Value SetFileList(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     
-    if (info.Length() < 1 || !info[1].IsArray()) {
+    if (info.Length() < 1 || !info[0].IsArray()) {
         Napi::TypeError::New(env, "Expected file list array").ThrowAsJavaScriptException();
         return env.Null();
     }
